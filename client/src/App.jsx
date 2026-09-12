@@ -21,28 +21,10 @@ const HeroProfile = React.lazy(() => import('./components/HeroProfile').then((m)
 const HallOfFame = React.lazy(() => import('./components/HallOfFame').then((m) => ({ default: m.HallOfFame })));
 
 const MainLayout = () => {
-  const { hero, isAuthenticated, loading } = useAuth();
+  const { hero, isGuest } = useAuth();
   const { playClick } = useSound();
   const [activeTab, setActiveTab] = useState('guild');
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-rpg-bg">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-lg bg-rpg-panel border-2 border-rpg-gold flex items-center justify-center animate-bounce shadow-glow-gold">
-            <Swords className="w-8 h-8 text-rpg-gold" />
-          </div>
-          <p className="font-pixel text-xs text-rpg-gold tracking-wider">
-            SUMMONING GUILD RECORDS...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <AuthModal />;
-  }
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -85,7 +67,7 @@ const MainLayout = () => {
       <AmbientParticles />
 
       {/* Top Navigation */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} onOpenAuth={() => setShowAuthModal(true)} />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
@@ -128,6 +110,20 @@ const MainLayout = () => {
           );
         })}
       </div>
+
+      {/* Optional Auth / Enlistment Modal */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+          >
+            <AuthModal onClose={() => setShowAuthModal(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Overlay Micro-Interactions */}
       <FloatingRewards />

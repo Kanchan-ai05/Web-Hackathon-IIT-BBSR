@@ -18,8 +18,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSound } from '../context/SoundContext';
 
-export const Navbar = ({ activeTab, setActiveTab }) => {
-  const { hero, logout } = useAuth();
+export const Navbar = ({ activeTab, setActiveTab, onOpenAuth }) => {
+  const { hero, isGuest, logout } = useAuth();
   const { isMuted, toggleSound, playClick } = useSound();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -127,8 +127,21 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
               )}
             </button>
 
-            {/* Logout Button */}
-            {hero && (
+            {/* Guest / Account Action */}
+            {isGuest ? (
+              <button
+                onClick={() => {
+                  playClick();
+                  if (onOpenAuth) onOpenAuth();
+                }}
+                title="Enlist or Sign In"
+                aria-label="Enlist or Sign In"
+                className="hidden sm:flex items-center space-x-1.5 bg-gradient-to-r from-amber-600/30 to-amber-900/30 border border-rpg-gold/70 hover:border-rpg-gold px-2.5 py-1.5 rounded text-rpg-gold hover:text-white font-pixel text-[10px] transition-all shadow-sm hover:shadow-glow-gold"
+              >
+                <span>DEMO HERO</span>
+                <span className="text-[8px] text-amber-200">(SIGN IN)</span>
+              </button>
+            ) : (
               <button
                 onClick={() => {
                   playClick();
@@ -175,7 +188,19 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
               </button>
             );
           })}
-          {hero && (
+          {isGuest ? (
+            <button
+              onClick={() => {
+                playClick();
+                setMobileMenuOpen(false);
+                if (onOpenAuth) onOpenAuth();
+              }}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-md font-pixel text-xs text-rpg-gold bg-rpg-panel border border-rpg-gold transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span>Enlist Hero / Sign In</span>
+            </button>
+          ) : (
             <button
               onClick={() => {
                 playClick();

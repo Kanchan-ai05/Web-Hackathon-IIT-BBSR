@@ -1,17 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { localRealmEngine } from '../services/localRealmEngine';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [hero, setHero] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('liferpg_token') || null);
-  const [loading, setLoading] = useState(true);
+  // Initialize with Guest Hero from localRealmEngine so app boots instantly without login
+  const [hero, setHero] = useState(() => {
+    return localRealmEngine.getHero();
+  });
+  const [token, setToken] = useState(localStorage.getItem('liferpg_token') || 'guest_realm_token');
+  const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
 
   // Sync token with localStorage
   useEffect(() => {
-    if (token) {
+    if (token && token !== 'guest_realm_token') {
       localStorage.setItem('liferpg_token', token);
     } else {
       localStorage.removeItem('liferpg_token');
@@ -21,34 +25,30 @@ export const AuthProvider = ({ children }) => {
   // Load current user profile
   useEffect(() => {
     const fetchCurrentHero = async () => {
-      if (!token) {
-        setHero(null);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await api.get('/auth/me');
-        if (res.data.success) {
-          setHero(res.data.user || res.data.hero);
-        } else {
-          setToken(null);
-          setHero(null);
+      // If user has a dedicated cloud token, attempt to verify it
+      if (token && token !== 'guest_realm_token') {
+        try {
+          const res = await api.get('/auth/me');
+          if (res.data.success) {
+            setHero(res.data.user || res.data.hero);
+          } else {
+            setHero(localRealmEngine.getHero());
+          }
+        } catch (err) {
+          console.warn('Cloud auth check fallback to Local Realm:', err.message);
+          setHero(localRealmEngine.getHero());
         }
-      } catch (err) {
-        console.warn('Auth check failed:', err.response?.data?.message || err.message);
-        setToken(null);
-        setHero(null);
-      } finally {
-        setLoading(false);
+      } else {
+        setHero(localRealmEngine.getHero());
       }
+      setLoading(false);
     };
 
     fetchCurrentHero();
 
     const handleLogoutEvent = () => {
-      setToken(null);
-      setHero(null);
+      setToken('guest_realm_token');
+      setHero(localRealmEngine.getHero());
     };
 
     window.addEventListener('liferpg_logout', handleLogoutEvent);
@@ -112,8 +112,9 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       // Ignore network errors on logout
     }
-    setToken(null);
-    setHero(null);
+    setToken('guest_realm_token');
+    const guestHero = localRealmEngine.getHero();
+    setHero(guestHero);
     localStorage.removeItem('liferpg_token');
   };
 
@@ -152,7 +153,8 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateTheme,
         updateHero,
-        isAuthenticated: !!hero
+        isAuthenticated: true, // Always true: instant access to all pages without login
+        isGuest: !token || token === 'guest_realm_token'
       }}
     >
       {children}

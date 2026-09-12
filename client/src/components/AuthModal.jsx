@@ -15,7 +15,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSound } from '../context/SoundContext';
 
-export const AuthModal = () => {
+export const AuthModal = ({ onClose }) => {
   const { login, register, authError } = useAuth();
   const { playClick, playLevelUp } = useSound();
 
@@ -78,6 +78,7 @@ export const AuthModal = () => {
         setLocalError(res.message);
       } else {
         playLevelUp();
+        if (onClose) onClose();
       }
     } else {
       if (!username.trim()) {
@@ -90,6 +91,7 @@ export const AuthModal = () => {
         setLocalError(res.message);
       } else {
         playLevelUp();
+        if (onClose) onClose();
       }
     }
     setSubmitting(false);
@@ -112,6 +114,7 @@ export const AuthModal = () => {
 
     if (res.success) {
       playLevelUp();
+      if (onClose) onClose();
     } else {
       setLocalError(res.message);
     }
@@ -125,6 +128,20 @@ export const AuthModal = () => {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-lg bg-rpg-panel border-4 border-rpg-border rounded-xl shadow-2xl p-6 sm:p-8 relative overflow-hidden"
       >
+        {/* Close Button if opened as overlay */}
+        {onClose && (
+          <button
+            onClick={() => {
+              playClick();
+              onClose();
+            }}
+            aria-label="Close modal and continue as guest"
+            className="absolute top-4 right-4 z-20 p-2 text-slate-400 hover:text-white bg-rpg-card/80 hover:bg-rpg-card rounded-lg border border-slate-700 transition-colors"
+          >
+            ✕
+          </button>
+        )}
+
         {/* Glow backdrop */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-rpg-gold/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-rpg-purple/10 rounded-full blur-3xl pointer-events-none" />
