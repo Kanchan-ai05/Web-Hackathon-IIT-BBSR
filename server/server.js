@@ -127,7 +127,7 @@ app.use((req, res, next) => {
 // Error handling middleware
 app.use(errorHandler);
 
-const MONGODB_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/liferpg'
 
 mongoose
   .connect(MONGODB_URI)
