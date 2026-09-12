@@ -1,9 +1,13 @@
+const path = require('path');
+// Ensure dotenv is loaded immediately before any other module or database code
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-require('dotenv').config();
 
 const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
@@ -147,6 +151,7 @@ const maskedUri = MONGODB_URI.includes('@')
 const mongooseOptions = {
   serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
+  maxPoolSize: 10,
   autoIndex: process.env.NODE_ENV !== 'production'
 };
 
@@ -158,33 +163,64 @@ mongoose.connection.on('reconnected', () => {
   console.log('✅ MongoDB connection restored.');
 });
 
-mongoose
-  .connect(MONGODB_URI, mongooseOptions)
-  .then(async () => {
-    console.log(`🔮 Connected to MongoDB Realm (${maskedUri})`);
-    await seedDefaultShopItems();
-
-    const server = app.listen(PORT, () => {
-      console.log(`🏰 Life RPG Server listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
-      console.log(`⚔️  Guild Hall API mounted at /api`);
-    });
-
-    // Graceful shutdown
-    const handleShutdown = async (signal) => {
-      console.log(`\n🛡️  Received ${signal}. Shutting down Life RPG Server gracefully...`);
-      server.close(async () => {
-        await mongoose.connection.close(false);
-        console.log('🔮 MongoDB Realm connection safely closed.');
-        process.exit(0);
+let dbPromise = null;
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) return;
+  if (!dbPromise) {
+    dbPromise = mongoose
+      .connect(MONGODB_URI, mongooseOptions)
+      .then(async () => {
+        console.log(`🔮 Connected to MongoDB Realm (${maskedUri})`);
+        await seedDefaultShopItems().catch(() => {});
+      })
+      .catch((err) => {
+        dbPromise = null;
+        console.error('💥 Guild database connection failed:', err.message);
+        if (err.message.includes('bad auth') || err.message.includes('Authentication failed')) {
+          console.error('👉 MongoDB Atlas Auth Failure: Verify your database username and password in MONGODB_URI.');
+          console.error('👉 Note: If your password contains special characters (like @, #, %, !), ensure they are URL-encoded.');
+        } else if (err.message.includes('whitelisted') || err.message.includes('selection timed out') || err.name === 'MongoServerSelectionError') {
+          console.error('👉 MongoDB Atlas Network Issue: Verify that IP Whitelist in Atlas Network Access includes 0.0.0.0/0 (Allow Access from Anywhere).');
+        }
+        throw err;
       });
-    };
+  }
+  return dbPromise;
+};
 
-    process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-    process.on('SIGINT', () => handleShutdown('SIGINT'));
-  })
-  .catch((err) => {
-    console.error('💥 Guild database connection failed:', err.message);
-    process.exit(1);
+if (process.env.VERCEL) {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDB();
+    } catch (e) {
+      // Allow request to proceed to route handlers/error handlers
+    }
+    next();
   });
+} else {
+  connectDB()
+    .then(() => {
+      const server = app.listen(PORT, () => {
+        console.log(`🏰 Life RPG Server listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+        console.log(`⚔️  Guild Hall API mounted at /api`);
+      });
+
+      // Graceful shutdown
+      const handleShutdown = async (signal) => {
+        console.log(`\n🛡️  Received ${signal}. Shutting down Life RPG Server gracefully...`);
+        server.close(async () => {
+          await mongoose.connection.close(false);
+          console.log('🔮 MongoDB Realm connection safely closed.');
+          process.exit(0);
+        });
+      };
+
+      process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+      process.on('SIGINT', () => handleShutdown('SIGINT'));
+    })
+    .catch(() => {
+      process.exit(1);
+    });
+}
 
 module.exports = app;
