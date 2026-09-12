@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 // Security HTTP headers
 app.use(helmet());
 
-// Dynamic CORS configuration: permits configured CLIENT_URL, Vercel, Netlify, and local dev
+// Dynamic CORS configuration: permits configured CLIENT_URL, Vercel, Netlify, and dev origins
 const allowedOrigins = (process.env.CLIENT_URL || '')
   .split(',')
   .map((url) => url.trim())
@@ -35,10 +35,9 @@ app.use(
       if (
         allowedOrigins.includes('*') ||
         allowedOrigins.includes(origin) ||
-        origin === 'http://localhost:5173' ||
-        origin === 'http://localhost:3000' ||
         origin.endsWith('.vercel.app') ||
-        origin.endsWith('.netlify.app')
+        origin.endsWith('.netlify.app') ||
+        process.env.NODE_ENV !== 'production'
       ) {
         return callback(null, true);
       }
@@ -127,18 +126,61 @@ app.use((req, res, next) => {
 // Error handling middleware
 app.use(errorHandler);
 
+// Validate mandatory environment secrets
+if (!process.env.MONGODB_URI) {
+  console.error('💥 FATAL CONFIGURATION ERROR: process.env.MONGODB_URI is not defined.');
+  console.error('Please configure MONGODB_URI in your environment variables or .env file.');
+  process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+  console.error('💥 FATAL CONFIGURATION ERROR: process.env.JWT_SECRET is not defined.');
+  console.error('Please configure JWT_SECRET in your environment variables or .env file.');
+  process.exit(1);
+}
+
 const MONGODB_URI = process.env.MONGODB_URI;
+const maskedUri = MONGODB_URI.includes('@')
+  ? MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:*****@')
+  : MONGODB_URI;
+
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+  autoIndex: process.env.NODE_ENV !== 'production'
+};
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️  MongoDB connection lost. Reconnecting...');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB connection restored.');
+});
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(MONGODB_URI, mongooseOptions)
   .then(async () => {
-    console.log('🔮 Connected to MongoDB Realm:', MONGODB_URI);
+    console.log(`🔮 Connected to MongoDB Realm (${maskedUri})`);
     await seedDefaultShopItems();
 
-    app.listen(PORT, () => {
-      console.log(`🏰 Life RPG Server listening on port ${PORT}`);
-      console.log(`⚔️  Guild Hall API available at http://localhost:${PORT}/api`);
+    const server = app.listen(PORT, () => {
+      console.log(`🏰 Life RPG Server listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+      console.log(`⚔️  Guild Hall API mounted at /api`);
     });
+
+    // Graceful shutdown
+    const handleShutdown = async (signal) => {
+      console.log(`\n🛡️  Received ${signal}. Shutting down Life RPG Server gracefully...`);
+      server.close(async () => {
+        await mongoose.connection.close(false);
+        console.log('🔮 MongoDB Realm connection safely closed.');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+    process.on('SIGINT', () => handleShutdown('SIGINT'));
   })
   .catch((err) => {
     console.error('💥 Guild database connection failed:', err.message);

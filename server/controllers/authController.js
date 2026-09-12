@@ -4,9 +4,12 @@ const Task = require('../models/Task');
 const { CLASS_PROFILES, getXpRequiredForLevel } = require('../utils/rpgEngine');
 
 const signToken = (id) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not defined.');
+  }
   return jwt.sign(
     { id },
-    process.env.JWT_SECRET || 'super_secret_rpg_guild_master_key_16bit_fantasy',
+    process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };
