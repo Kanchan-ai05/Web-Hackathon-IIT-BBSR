@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #070b13;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
+      linear-gradient(to bottom, #070b13, #0b1120);
+    min-height: 100vh;
+  }
+
+  /* Custom 16-bit scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #090e1a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+
+  /* Keyboard Accessibility: High-contrast gold focus ring */
+  *:focus-visible {
+    outline: 2px solid #f59e0b;
+    outline-offset: 2px;
+  }
+
+  /* Accessibility: Prefers reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* 16-Bit Retro Pixel Borders */
+  .pixel-border {
+    box-shadow: 
+      0 -3px 0 0 #0f172a,
+      0 3px 0 0 #0f172a,
+      -3px 0 0 0 #0f172a,
+      3px 0 0 0 #0f172a;
+    border: 2px solid #2a3a5e;
+  }
+
+  .pixel-border-gold {
+    box-shadow: 
+      0 -3px 0 0 #78350f,
+      0 3px 0 0 #78350f,
+      -3px 0 0 0 #78350f,
+      3px 0 0 0 #78350f;
+    border: 2px solid #f59e0b;
+  }
+
+  .pixel-border-purple {
+    box-shadow: 
+      0 -3px 0 0 #3b0764,
+      0 3px 0 0 #3b0764,
+      -3px 0 0 0 #3b0764,
+      3px 0 0 0 #3b0764;
+    border: 2px solid #8b5cf6;
+  }
+
+  /* Pixel Tactile Push Buttons */
+  .btn-pixel {
+    position: relative;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    padding: 0.65rem 1.15rem;
+    text-transform: uppercase;
+    transition: all 0.08s ease;
+    box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.6);
+    user-select: none;
+  }
+
+  .btn-pixel:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.6);
+  }
+
+  .btn-pixel-gold {
+    background-color: #f59e0b;
+    color: #451a03;
+    border: 2px solid #fde68a;
+    font-weight: bold;
+  }
+  .btn-pixel-gold:hover {
+    background-color: #fbbf24;
+    box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.5);
+  }
+
+  .btn-pixel-purple {
+    background-color: #7c3aed;
+    color: #f5f3ff;
+    border: 2px solid #c4b5fd;
+  }
+  .btn-pixel-purple:hover {
+    background-color: #8b5cf6;
+    box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.6), 0 0 16px rgba(139, 92, 246, 0.5);
+  }
+
+  .btn-pixel-emerald {
+    background-color: #059669;
+    color: #ecfdf5;
+    border: 2px solid #a7f3d0;
+  }
+  .btn-pixel-emerald:hover {
+    background-color: #10b981;
+    box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.6), 0 0 16px rgba(16, 185, 129, 0.5);
+  }
+
+  .btn-pixel-dark {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border: 2px solid #475569;
+  }
+  .btn-pixel-dark:hover {
+    background-color: #334155;
+  }
+
+  /* Castle Theme: Royal Stone Fortress & Gold Trim */
+  .theme-castle {
+    background-color: #0c0f17 !important;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(217, 119, 6, 0.18) 0%, transparent 60%),
+      radial-gradient(circle at 10% 90%, rgba(180, 83, 9, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.10) 0%, transparent 40%),
+      linear-gradient(to bottom, #111827, #0b0f19) !important;
+  }
+  .theme-castle .bg-rpg-bg {
+    background-color: #0c0f17 !important;
+  }
+  .theme-castle .bg-rpg-panel {
+    background-color: #172033 !important;
+    border-color: #4b5563 !important;
+  }
+  .theme-castle .bg-rpg-card {
+    background-color: #131b2e !important;
+    border-color: #374151 !important;
+  }
+
+  /* Night Theme: Midnight Cosmic Starry Realm */
+  .theme-night {
+    background-color: #030712 !important;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.22) 0%, transparent 65%),
+      radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 15% 85%, rgba(6, 182, 212, 0.16) 0%, transparent 50%),
+      linear-gradient(to bottom, #030712, #070d1e) !important;
+  }
+  .theme-night .bg-rpg-bg {
+    background-color: #030712 !important;
+  }
+  .theme-night .bg-rpg-panel {
+    background-color: #0f172a !important;
+    border-color: #312e81 !important;
+  }
+  .theme-night .bg-rpg-card {
+    background-color: #0b1126 !important;
+    border-color: #1e1b4b !important;
+  }
+
+  /* Satisfying Purchase Animations */
+  @keyframes coinBurst {
+    0% { transform: scale(0.5) translateY(0); opacity: 0; }
+    50% { transform: scale(1.3) translateY(-16px); opacity: 1; }
+    100% { transform: scale(1) translateY(-24px); opacity: 0; }
+  }
+  .animate-coin-burst {
+    animation: coinBurst 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes pulseGlowGold {
+    0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.2); }
+    50% { box-shadow: 0 0 35px rgba(245, 158, 11, 0.9), inset 0 0 25px rgba(245, 158, 11, 0.4); }
+  }
+  .animate-pulse-gold {
+    animation: pulseGlowGold 1.6s infinite ease-in-out;
+  }
+
+  @keyframes beamShine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(200%) rotate(45deg); }
+  }
+  .animate-beam-shine {
+    animation: beamShine 2.5s infinite;
+  }
+}

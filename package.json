@@ -1,0 +1,28 @@
+{
+  "name": "life-rpg",
+  "version": "1.0.0",
+  "description": "Life RPG - A 16-bit fantasy RPG productivity and habit tracking web application",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "start": "node server/server.js",
+    "build": "npm run build --prefix client",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "seed": "node server/seeds/shopSeeds.js"
+  },
+  "keywords": [
+    "rpg",
+    "productivity",
+    "gamification",
+    "mern",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
