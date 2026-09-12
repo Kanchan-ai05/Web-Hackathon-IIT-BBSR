@@ -15,7 +15,9 @@
 
 **A commercial-grade full-stack productivity and habit-tracking RPG that transforms real-world goals, study, fitness, and coding habits into an immersive 16-bit retro fantasy adventure.**
 
-[🌐 Live Web Application](http://bejewelled-sopapillas-194236.netlify.app) • [📖 API Documentation](./API_DOCUMENTATION.md) • [🚀 Deployment Guide](./DEPLOYMENT.md)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Kanchan-ai05/Web-Hackathon-IIT-BBSR)
+
+[🌐 Live Web Application](https://dist-theta-five.vercel.app) • [📖 API Documentation](./API_DOCUMENTATION.md) • [🚀 Deployment Guide](./DEPLOYMENT.md)
 
 </div>
 

@@ -103,11 +103,14 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  const isConnected = mongoose.connection.readyState === 1;
-  res.status(isConnected ? 200 : 503).json({
-    status: isConnected ? 'online' : 'degraded',
+  const dbState = mongoose.connection.readyState;
+  const dbStatusMap = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  res.status(200).json({
+    status: 'ok',
     realm: 'Life RPG Guild Server',
-    mongoConnection: isConnected ? 'connected' : 'disconnected',
+    database: dbStatusMap[dbState] || 'unknown',
+    mongoConnection: dbState === 1 ? 'connected' : 'connecting',
+    uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
 });
@@ -198,29 +201,30 @@ if (process.env.VERCEL) {
     next();
   });
 } else {
-  connectDB()
-    .then(() => {
-      const server = app.listen(PORT, () => {
-        console.log(`🏰 Life RPG Server listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
-        console.log(`⚔️  Guild Hall API mounted at /api`);
-      });
+  const server = app.listen(PORT, () => {
+    console.log(`🏰 Life RPG Server listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+    console.log(`⚔️  Guild Hall API mounted at /api`);
+  });
 
-      // Graceful shutdown
-      const handleShutdown = async (signal) => {
-        console.log(`\n🛡️  Received ${signal}. Shutting down Life RPG Server gracefully...`);
-        server.close(async () => {
-          await mongoose.connection.close(false);
-          console.log('🔮 MongoDB Realm connection safely closed.');
-          process.exit(0);
-        });
-      };
+  // Connect to database in parallel with automatic background retry
+  connectDB().catch((err) => {
+    console.error('⚠️  Database connection will retry in background:', err.message);
+  });
 
-      process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-      process.on('SIGINT', () => handleShutdown('SIGINT'));
-    })
-    .catch(() => {
-      process.exit(1);
+  // Graceful shutdown
+  const handleShutdown = async (signal) => {
+    console.log(`\n🛡️  Received ${signal}. Shutting down Life RPG Server gracefully...`);
+    server.close(async () => {
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.connection.close(false);
+      }
+      console.log('🔮 MongoDB Realm connection safely closed.');
+      process.exit(0);
     });
+  };
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
 
 module.exports = app;
