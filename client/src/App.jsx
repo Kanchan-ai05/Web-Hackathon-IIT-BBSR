@@ -12,13 +12,12 @@ import { LevelUpModal } from './components/LevelUpModal';
 import { AmbientParticles } from './components/AmbientParticles';
 import { Swords, Scroll, ShoppingBag, Package, User, Trophy } from 'lucide-react';
 
-// Lazy load heavy page views with chunk splitting
-const GuildHall = React.lazy(() => import('./components/GuildHall').then((m) => ({ default: m.GuildHall })));
-const QuestBoard = React.lazy(() => import('./components/QuestBoard').then((m) => ({ default: m.QuestBoard })));
-const ShopPage = React.lazy(() => import('./components/ShopPage').then((m) => ({ default: m.ShopPage })));
-const InventoryPage = React.lazy(() => import('./components/InventoryPage').then((m) => ({ default: m.InventoryPage })));
-const HeroProfile = React.lazy(() => import('./components/HeroProfile').then((m) => ({ default: m.HeroProfile })));
-const HallOfFame = React.lazy(() => import('./components/HallOfFame').then((m) => ({ default: m.HallOfFame })));
+import { GuildHall } from './components/GuildHall';
+import { QuestBoard } from './components/QuestBoard';
+import { ShopPage } from './components/ShopPage';
+import { InventoryPage } from './components/InventoryPage';
+import { HeroProfile } from './components/HeroProfile';
+import { HallOfFame } from './components/HallOfFame';
 
 const MainLayout = () => {
   const { hero, isGuest } = useAuth();
@@ -79,9 +78,7 @@ const MainLayout = () => {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
           >
-            <React.Suspense fallback={<SkeletonLoader count={4} />}>
-              {renderActiveTab()}
-            </React.Suspense>
+            {renderActiveTab()}
           </motion.div>
         </AnimatePresence>
       </main>

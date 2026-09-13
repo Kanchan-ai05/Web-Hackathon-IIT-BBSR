@@ -371,6 +371,19 @@ class LocalRealmEngine {
       };
     }
 
+    if (url === '/auth/theme' && method === 'PATCH') {
+      const hero = this.getHero();
+      if (body.theme) hero.equippedTheme = body.theme;
+      this.saveHero(hero);
+      return {
+        data: {
+          success: true,
+          user: hero,
+          hero
+        }
+      };
+    }
+
     // --- QUESTS ---
     if (url === '/quests' && method === 'GET') {
       let quests = this.getQuests();
@@ -504,6 +517,35 @@ class LocalRealmEngine {
             user: hero,
             hero,
             levelUpData
+          }
+        };
+      }
+    }
+
+    // Undo quest
+    const undoMatch = url.match(/^\/quests\/([^/]+)\/undo$/);
+    if (undoMatch && method === 'POST') {
+      const questId = undoMatch[1];
+      const quests = this.getQuests();
+      const quest = quests.find((q) => q._id === questId);
+      const hero = this.getHero();
+      if (quest && quest.completed) {
+        quest.completed = false;
+        delete quest.completedAt;
+        if (quest.questType === 'daily') quest.streak = Math.max(0, (quest.streak || 1) - 1);
+        if (quest.questType === 'boss') quest.bossHp = quest.bossMaxHp || 100;
+        this.saveQuests(quests);
+
+        hero.gold = Math.max(0, (hero.gold || 0) - quest.goldReward);
+        hero.xp = Math.max(0, (hero.xp || 0) - quest.xpReward);
+        this.saveHero(hero);
+
+        return {
+          data: {
+            success: true,
+            quest,
+            user: hero,
+            hero
           }
         };
       }
@@ -655,6 +697,63 @@ class LocalRealmEngine {
           }
         };
       }
+    }
+
+    // Redeem voucher / potion in inventory
+    const redeemMatch = url.match(/^\/shop\/inventory\/([^/]+)\/redeem$/);
+    if (redeemMatch && method === 'POST') {
+      const invId = redeemMatch[1];
+      const inventory = this.getInventory();
+      const hero = this.getHero();
+      const target = inventory.find((i) => i._id === invId);
+      if (target) {
+        target.used = true;
+        target.usedAt = new Date().toISOString();
+        this.saveInventory(inventory);
+        return {
+          data: {
+            success: true,
+            message: `Redeemed "${target.name}"! Enjoy your reward, champion!`,
+            inventory,
+            user: hero,
+            hero
+          }
+        };
+      }
+    }
+
+    // Custom reward scrolls
+    if (url === '/shop/rewards' && method === 'POST') {
+      const hero = this.getHero();
+      const customReward = {
+        _id: 'custom_' + Date.now(),
+        name: body.name,
+        description: body.description || '',
+        cost: Number(body.cost) || 50,
+        icon: body.icon || 'Gamepad2',
+        category: 'custom_reward',
+        isCustom: true,
+        user: hero._id,
+        createdAt: new Date().toISOString()
+      };
+      DEFAULT_SHOP_ITEMS.push(customReward);
+      return {
+        data: {
+          success: true,
+          reward: customReward,
+          item: customReward
+        }
+      };
+    }
+
+    const deleteRewardMatch = url.match(/^\/shop\/rewards\/([^/]+)$/);
+    if (deleteRewardMatch && method === 'DELETE') {
+      const rewardId = deleteRewardMatch[1];
+      const idx = DEFAULT_SHOP_ITEMS.findIndex((i) => i._id === rewardId);
+      if (idx >= 0) {
+        DEFAULT_SHOP_ITEMS.splice(idx, 1);
+      }
+      return { data: { success: true } };
     }
 
     // --- STATS ---
