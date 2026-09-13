@@ -89,20 +89,8 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
-// MongoDB connection readiness check middleware
-app.use((req, res, next) => {
-  if (req.path === '/api/health') return next();
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      success: false,
-      message: 'Guild database connection unavailable. The realm is currently reconnecting.'
-    });
-  }
-  next();
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check and root info handler
+const handleHealthCheck = (req, res) => {
   const dbState = mongoose.connection.readyState;
   const dbStatusMap = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
   res.status(200).json({
@@ -111,8 +99,47 @@ app.get('/api/health', (req, res) => {
     database: dbStatusMap[dbState] || 'unknown',
     mongoConnection: dbState === 1 ? 'connected' : 'connecting',
     uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+};
+
+// Mount root and health check endpoints before readiness check
+app.get(['/health', '/api/health'], handleHealthCheck);
+app.get('/', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  res.status(200).json({
+    status: 'ok',
+    realm: 'Life RPG Guild Server — 16-Bit Gamified Habit RPG API',
+    database: dbState === 1 ? 'connected' : 'connecting',
+    endpoints: {
+      health: '/api/health',
+      auth: ['/api/auth/signup', '/api/auth/login', '/api/auth/me', '/api/auth/profile', '/api/auth/theme'],
+      quests: ['/api/quests', '/api/quests/:id', '/api/quests/:id/complete', '/api/quests/:id/undo'],
+      shop: ['/api/shop/items', '/api/shop/purchase', '/api/shop/inventory', '/api/shop/rewards'],
+      stats: ['/api/stats/overview', '/api/stats/leaderboard']
+    },
     timestamp: new Date().toISOString()
   });
+});
+
+// MongoDB connection readiness check middleware
+app.use((req, res, next) => {
+  if (
+    req.path === '/' ||
+    req.path === '/health' ||
+    req.path === '/api/health' ||
+    req.path === '/favicon.ico'
+  ) {
+    return next();
+  }
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Guild database connection unavailable. The realm is currently reconnecting.'
+    });
+  }
+  next();
 });
 
 // Mount Guild API routes (supporting both /api/quests and /api/tasks)
@@ -133,21 +160,18 @@ app.use((req, res, next) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Validate mandatory environment secrets
+// Validate environment secrets with resilient fallbacks
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/liferpg';
 if (!process.env.MONGODB_URI) {
-  console.error('💥 FATAL CONFIGURATION ERROR: process.env.MONGODB_URI is not defined.');
-  console.error('Please configure MONGODB_URI in your environment variables or .env file.');
-  process.exit(1);
+  console.warn('⚠️  process.env.MONGODB_URI is not set. Defaulting to local MongoDB URI.');
 }
 
 if (!process.env.JWT_SECRET) {
-  console.error('💥 FATAL CONFIGURATION ERROR: process.env.JWT_SECRET is not defined.');
-  console.error('Please configure JWT_SECRET in your environment variables or .env file.');
-  process.exit(1);
+  process.env.JWT_SECRET = 'super_secret_rpg_guild_master_key_16bit_fantasy';
+  console.warn('⚠️  process.env.JWT_SECRET is not set. Defaulting to standard secret.');
 }
 
-const MONGODB_URI = process.env.MONGODB_URI;
-const maskedUri = MONGODB_URI.includes('@')
+const maskedUri = MONGODB_URI && MONGODB_URI.includes('@')
   ? MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:*****@')
   : MONGODB_URI;
 

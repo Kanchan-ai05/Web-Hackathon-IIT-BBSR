@@ -197,7 +197,7 @@ const getMe = async (req, res) => {
 const updateTheme = async (req, res, next) => {
   try {
     const { theme } = req.body;
-    const allowed = ['dark-fantasy', 'classic-retro', 'emerald-forest', 'crimson-dungeon'];
+    const allowed = ['dark-fantasy', 'castle-theme', 'night-theme', 'classic-retro', 'emerald-forest', 'crimson-dungeon'];
 
     if (!allowed.includes(theme)) {
       return res.status(400).json({
@@ -223,13 +223,17 @@ const updateTheme = async (req, res, next) => {
 
 const updateProfile = async (req, res, next) => {
   try {
-    const { username, avatar, title, heroClass } = req.body;
+    const { username, avatar, title, heroClass, equippedTheme } = req.body;
     const user = req.user;
 
     if (username) user.username = username.trim();
     if (avatar) user.avatar = avatar;
-    if (title && user.titles.includes(title)) {
+    if (equippedTheme) user.equippedTheme = equippedTheme;
+    if (title) {
       user.title = title;
+      if (!user.titles.includes(title)) {
+        user.titles.push(title);
+      }
     }
     if (heroClass && CLASS_PROFILES[heroClass]) {
       user.heroClass = heroClass;
