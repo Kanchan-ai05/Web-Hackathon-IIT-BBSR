@@ -17,7 +17,7 @@
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Kanchan-ai05/Web-Hackathon-IIT-BBSR)
 
-[🌐 Live Web Application](https://dist-theta-five.vercel.app) • [📖 API Documentation](./API_DOCUMENTATION.md) • [🚀 Deployment Guide](./DEPLOYMENT.md)
+[🌐 Live Web Application (Play Instantly)](https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/) • [📖 API Documentation](./API_DOCUMENTATION.md) • [🚀 Deployment Guide](./DEPLOYMENT.md)
 
 </div>
 
