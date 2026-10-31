@@ -1,21 +1,40 @@
 services:
+  # Backend API Service (FastAPI + OR-Tools + SQLite)
   - type: web
-    name: life-rpg-server
-    env: node
-    plan: free
-    rootDir: server
-    buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /api/health
+    name: cit-scheduling-api
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 5000
-      - key: MONGODB_URI
-        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: DATABASE_URL
+        value: sqlite:////data/cit_schedule.db
       - key: JWT_SECRET
         generateValue: true
-      - key: CLIENT_URL
-        value: '*'
+      - key: ALLOWED_ORIGINS
+        value: "*"
+    disk:
+      name: cit-data
+      mountPath: /data
+      sizeGB: 1
 
+  # Frontend Web UI (Next.js 14)
+  - type: web
+    name: cit-scheduling-ui
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: cit-scheduling-api
+          property: host

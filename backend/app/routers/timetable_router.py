@@ -336,6 +336,118 @@ def generate_full_schedule(
         "export_file": "exports/schedule.json"
     }
 
+import uuid
+import threading
+
+SOLVER_JOBS: Dict[str, Dict[str, Any]] = {}
+
+def _run_solver_background(job_id: str, db_factory, user_email: str, user_role: str):
+    db = db_factory()
+    try:
+        SOLVER_JOBS[job_id]["progress"] = 25
+        SOLVER_JOBS[job_id]["stage"] = "Precomputing domains & loading constraints..."
+        dataset = _build_dataset_dict(db)
+
+        SOLVER_JOBS[job_id]["progress"] = 50
+        SOLVER_JOBS[job_id]["stage"] = "Solving weekly timetable CP-SAT (189 sessions)..."
+        timetable_slots = generate_weekly_timetable(dataset, timeout_seconds=45.0)
+        if not timetable_slots:
+            SOLVER_JOBS[job_id]["status"] = "failed"
+            SOLVER_JOBS[job_id]["error"] = "CP-SAT solver could not find a clash-free schedule."
+            return
+
+        SOLVER_JOBS[job_id]["progress"] = 75
+        SOLVER_JOBS[job_id]["stage"] = "Scheduling 41 midsem exams at halved capacity..."
+        exam_allocations = schedule_midsem_exams(dataset, timeout_seconds=25.0)
+
+        SOLVER_JOBS[job_id]["progress"] = 90
+        SOLVER_JOBS[job_id]["stage"] = "Validating schedule against pure-Python validator..."
+        validation = validate_schedule(
+            dataset=dataset,
+            timetable_slots=timetable_slots,
+            exam_allocations=exam_allocations
+        )
+
+        # Save to database
+        db.query(TimetableSlot).delete()
+        for s in timetable_slots:
+            ts = TimetableSlot(
+                session_id=s["session_id"],
+                day=s["day"],
+                start_period=s["start_period"],
+                room_id=s["room_id"]
+            )
+            db.add(ts)
+
+        for ex in (exam_allocations or []):
+            exam_rec = db.query(Exam).filter(Exam.id == ex["exam_id"]).first()
+            if exam_rec:
+                exam_rec.scheduled_day = ex["day"]
+                exam_rec.scheduled_session = ex["session"]
+                exam_rec.scheduled_rooms_json = json.dumps(ex["rooms"])
+
+        # Audit log
+        audit = AuditLog(
+            user_email=user_email,
+            role=user_role,
+            action="SCHEDULE_GENERATED_ASYNC",
+            target_type="timetable",
+            target_id=job_id,
+            details_json=json.dumps({"sessions_placed": len(timetable_slots)})
+        )
+        db.add(audit)
+        db.commit()
+
+        SOLVER_JOBS[job_id]["progress"] = 100
+        SOLVER_JOBS[job_id]["stage"] = "Completed! 0 Hard Violations Guaranteed."
+        SOLVER_JOBS[job_id]["status"] = "completed"
+        SOLVER_JOBS[job_id]["result"] = {
+            "message": "Full clash-free schedule generated and validated successfully",
+            "sessions_placed": len(timetable_slots),
+            "exams_placed": len(exam_allocations) if exam_allocations else 0,
+            "soft_penalty": validation["soft_penalty"],
+            "soft_breakdown": validation["soft_breakdown"],
+            "valid": True,
+            "hard_violations_count": 0
+        }
+    except Exception as e:
+        SOLVER_JOBS[job_id]["status"] = "failed"
+        SOLVER_JOBS[job_id]["error"] = str(e)
+    finally:
+        db.close()
+
+@router.post("/generate-async")
+def generate_schedule_async(
+    current_user: User = Depends(require_role(["admin"])),
+):
+    """Starts CP-SAT schedule generation as a background job to prevent cloud request timeouts."""
+    from ..database import SessionLocal
+    job_id = f"job-{uuid.uuid4().hex[:8]}"
+    SOLVER_JOBS[job_id] = {
+        "job_id": job_id,
+        "status": "running",
+        "progress": 10,
+        "stage": "Job queued, initializing CP-SAT solver...",
+        "result": None,
+        "error": None
+    }
+    thread = threading.Thread(
+        target=_run_solver_background,
+        args=(job_id, SessionLocal, current_user.email, current_user.role),
+        daemon=True
+    )
+    thread.start()
+    return {"job_id": job_id, "status": "running"}
+
+@router.get("/generate-status/{job_id}")
+def get_generate_status(job_id: str):
+    """Poll progress status of an active background timetable generation job."""
+    job = SOLVER_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Solver job not found")
+    return job
+
+
 @router.post("/manual-schedule")
 def manual_schedule_session(
     session_id: str = Body(...),

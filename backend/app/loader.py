@@ -282,12 +282,21 @@ def init_db(data_filepath: Optional[str] = None) -> Dict[str, int]:
     """Initialize database and load dataset from disk."""
     path = data_filepath or settings.DATA_PATH
     if not os.path.exists(path):
-        # Fallback to local data/cit_public.json
-        alt_path = os.path.join(os.getcwd(), "data", "cit_public.json")
-        if os.path.exists(alt_path):
-            path = alt_path
-        else:
-            raise FileNotFoundError(f"CIT dataset not found at {path} or {alt_path}")
+        candidates = [
+            os.path.join(os.getcwd(), "data", "cit_public.json"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "cit_public.json"),
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "cit_public.json"),
+            "data/cit_public.json",
+            "../data/cit_public.json"
+        ]
+        found = False
+        for c in candidates:
+            if os.path.exists(c):
+                path = c
+                found = True
+                break
+        if not found:
+            raise FileNotFoundError(f"CIT dataset not found at {path} or any candidate paths")
 
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)

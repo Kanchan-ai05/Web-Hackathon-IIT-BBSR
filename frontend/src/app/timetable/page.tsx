@@ -134,7 +134,11 @@ export default function TimetablePage() {
     }
   }, [activeTab]);
 
-  // Generate full schedule via CP-SAT
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [jobProgress, setJobProgress] = useState(0);
+  const [jobStage, setJobStage] = useState("");
+
+  // Generate full schedule via CP-SAT as background job to prevent cloud timeouts
   const handleGenerateSchedule = async () => {
     if (!token) {
       setError("Admin authentication required to generate schedule");
@@ -144,26 +148,58 @@ export default function TimetablePage() {
     setError(null);
     setMessage(null);
     setSolverResult(null);
+    setShowProgressModal(true);
+    setJobProgress(15);
+    setJobStage("Submitting asynchronous solve job to CP-SAT engine...");
 
     try {
-      const res = await fetch(`${apiUrl}/api/timetable/generate?timeout_seconds=60.0`, {
+      const res = await fetch(`${apiUrl}/api/timetable/generate-async`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.detail?.message || data.detail || "Solver failed to generate timetable");
+        throw new Error(data.detail?.message || data.detail || "Solver job submission failed");
       }
-      setSolverResult(data);
-      setMessage(
-        `✓ Clash-free schedule generated! ${data.sessions_placed} sessions and ${data.exams_placed} exams placed with 0 hard violations.`
-      );
-      fetchTimetable();
-      fetchExams();
+
+      const jobId = data.job_id;
+
+      // Poll background status every 1 second
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${apiUrl}/api/timetable/generate-status/${jobId}`);
+          if (!statusRes.ok) return;
+          const statusData = await statusRes.json();
+
+          setJobProgress(statusData.progress || 20);
+          setJobStage(statusData.stage || "Processing constraints...");
+
+          if (statusData.status === "completed") {
+            clearInterval(pollInterval);
+            setSolverResult(statusData.result);
+            setMessage(
+              `✓ Clash-free schedule generated! ${statusData.result.sessions_placed} sessions and ${statusData.result.exams_placed} exams placed with 0 hard violations.`
+            );
+            setTimeout(() => {
+              setShowProgressModal(false);
+              setGenerating(false);
+            }, 1200);
+            fetchTimetable();
+            fetchExams();
+          } else if (statusData.status === "failed") {
+            clearInterval(pollInterval);
+            setShowProgressModal(false);
+            setGenerating(false);
+            setError(statusData.error || "Solver failed to find clash-free schedule.");
+          }
+        } catch (pollErr) {
+          // Retry on next tick
+        }
+      }, 1000);
     } catch (err: any) {
-      setError(err.message || "Schedule generation error");
-    } finally {
+      setShowProgressModal(false);
       setGenerating(false);
+      setError(err.message || "Schedule generation error");
     }
   };
 
@@ -741,6 +777,42 @@ export default function TimetablePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CP-SAT Solver Background Progress Modal */}
+      {showProgressModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4">
+            <div className="w-12 h-12 mx-auto rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-2xl animate-pulse">
+              ⚡
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">
+                Generating Clash-Free Schedule
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                OR-Tools CP-SAT Constraint Programming Solver running in background
+              </p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+              <div
+                className="bg-sky-600 h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${jobProgress}%` }}
+              />
+            </div>
+
+            <div className="flex justify-between items-center text-[11px] text-slate-500 px-1 font-mono">
+              <span className="truncate max-w-[280px] text-left">{jobStage}</span>
+              <span className="font-bold text-sky-700">{jobProgress}%</span>
+            </div>
+
+            <p className="text-[10px] text-slate-400">
+              Background job runs without host gateway timeout risk. Safe to wait or navigate.
+            </p>
           </div>
         </div>
       )}

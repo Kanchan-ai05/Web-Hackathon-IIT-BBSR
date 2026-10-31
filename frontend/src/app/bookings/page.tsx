@@ -224,7 +224,9 @@ export default function BookingsPage() {
       if (!res.ok) throw new Error(data.detail || "Failed to parse text");
       setParsedDraft(data);
     } catch (err: any) {
-      setError(err.message || "Parsing error");
+      setError("AI service unavailable or LLM key not configured. Automatically switched to Offline Manual Booking Form (100% functional without AI).");
+      setShowNlpModal(false);
+      setShowManualModal(true);
     } finally {
       setNlpParsing(false);
     }

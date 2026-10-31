@@ -376,7 +376,9 @@ class CITValidator:
             bk_id = bk.get("booking_id")
             day = bk.get("day")
             periods = bk.get("periods", [])
-            room_id = bk.get("room_id")
+            room_id = bk.get("room_id") or bk.get("assigned_room")
+            if not room_id or not day:
+                continue
 
             bk_data = self.bookings_map.get(bk_id, {})
             attendance = bk_data.get("attendance", 0)
@@ -519,16 +521,31 @@ class CITValidator:
 
         total_soft_penalty = sum(soft_breakdown.values())
 
+        # Booking score: priority-weighted evaluation of approved bookings
+        priority_weights = {
+            "institute_event": 10,
+            "guest_lecture": 8,
+            "department_event": 6,
+            "club_event": 4
+        }
+        approved_bookings = [b for b in bookings if b.get("status") in ("approved", "approve")]
+        booking_score = sum(
+            priority_weights.get(b.get("category") or b.get("requested_category", "club_event"), 5)
+            for b in approved_bookings
+        )
+
         return {
             "valid": len(violations) == 0,
             "hard_violations_count": len(violations),
             "violations": violations,
             "soft_penalty": total_soft_penalty,
             "soft_breakdown": soft_breakdown,
+            "booking_score": booking_score,
             "stats": {
                 "total_sessions_scheduled": len(scheduled_session_ids),
                 "total_sessions_required": len(self.sessions_map),
-                "total_approved_bookings": sum(1 for b in bookings if b.get("status") == "approved")
+                "total_approved_bookings": len(approved_bookings),
+                "booking_score": booking_score
             }
         }
 
@@ -544,12 +561,78 @@ def validate_schedule(
 
 if __name__ == "__main__":
     import sys
-    print("CIT Standalone Validator Engine - Pure Python")
-    if len(sys.argv) > 1:
-        with open(sys.argv[1], "r", encoding="utf-8") as f:
-            data = json.load(f)
-        validator = CITValidator(data)
-        res = validator.validate()
-        print(f"Validation Result: Valid={res['valid']}, Violations={res['hard_violations_count']}, Penalty={res['soft_penalty']}")
+    import os
+    import copy
+
+    print("============================================================")
+    print("   CIT OFFICIAL TIMETABLE & VENUE VALIDATOR (PURE PYTHON)   ")
+    print("============================================================")
+
+    if len(sys.argv) < 2:
+        print("Usage: python validator.py <schedule.json or schedule_after.json> [dataset.json]")
+        sys.exit(1)
+
+    schedule_file = sys.argv[1]
+    dataset_file = sys.argv[2] if len(sys.argv) > 2 else "data/cit_public.json"
+
+    if not os.path.exists(schedule_file):
+        print(f"Error: File not found: {schedule_file}")
+        sys.exit(1)
+
+    with open(schedule_file, "r", encoding="utf-8") as f:
+        sched_data = json.load(f)
+
+    # Check if schedule_file is the full dataset or an export
+    if "rooms" in sched_data and "sessions" in sched_data:
+        dataset = sched_data
+        timetable = sched_data.get("timetable", [])
+        exams = sched_data.get("exams", [])
+        bookings = sched_data.get("bookings", [])
     else:
-        print("Usage: python validator.py <cit_public.json or schedule.json>")
+        if not os.path.exists(dataset_file):
+            print(f"Error: Base dataset not found: {dataset_file}")
+            sys.exit(1)
+        with open(dataset_file, "r", encoding="utf-8") as f:
+            dataset = json.load(f)
+        timetable = sched_data.get("timetable", [])
+        exams = sched_data.get("exams", [])
+        bookings = sched_data.get("bookings", [])
+
+    # If validating a disruption export (e.g. schedule_after.json), apply disruption to dataset
+    moved_count = sched_data.get("moved_count", 0)
+    if "disruption_id" in sched_data:
+        disruption_file = "data/sample_disruption.json"
+        if os.path.exists(disruption_file):
+            with open(disruption_file, "r", encoding="utf-8") as f:
+                disruption = json.load(f)
+            updated_dataset = copy.deepcopy(dataset)
+            updated_dataset["sessions"].extend(disruption.get("new_sessions", []))
+            for leave in disruption.get("faculty_leaves", []):
+                for fac in updated_dataset["faculty"]:
+                    if fac["id"] == leave["faculty_id"]:
+                        fac.setdefault("unavailable", []).append({
+                            "day": leave["day"],
+                            "periods": leave["periods"]
+                        })
+            dataset = updated_dataset
+
+    validator = CITValidator(dataset)
+    result = validator.validate(
+        timetable_slots=timetable,
+        booking_allocations=bookings,
+        exam_allocations=exams
+    )
+
+    print(f"Target File:      {schedule_file}")
+    print(f"Schedule Valid:   {result['valid']}")
+    print(f"Hard Violations:  {result['hard_violations_count']}")
+    if result["violations"]:
+        print("Violation Details:")
+        for v in result["violations"]:
+            print(f"  - [{v['rule']}] Entities: {v['entities']} @ Slot: {v['slot']}")
+    print(f"Soft Penalty:     {result['soft_penalty']}")
+    print(f"Booking Score:    {result['booking_score']}")
+    if "disruption_id" in sched_data:
+        print(f"Sessions Moved:   {moved_count}")
+    print("============================================================")
+

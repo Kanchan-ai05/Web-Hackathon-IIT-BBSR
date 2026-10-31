@@ -104,6 +104,40 @@ Open `http://localhost:3000` in your browser.
 
 ---
 
+## ⚡ Generating Schedule Exports & Official Validation
+
+To run the complete end-to-end pipeline (data ingestion $\rightarrow$ CP-SAT timetable generation $\rightarrow$ midsem exam scheduling $\rightarrow$ Spectra venue booking resolution $\rightarrow$ sample disruption rescheduling $\rightarrow$ official validation) without any hand editing:
+
+```powershell
+python scripts/generate_exports.py
+```
+
+### Official Python Validator CLI
+You can run the official pure-Python validator independently on any generated file:
+
+```powershell
+# Validate base schedule (189 sessions, 41 exams, 25 bookings)
+python validator.py exports/schedule.json data/cit_public.json
+
+# Validate disrupted schedule (with minimal moves <= 5)
+python validator.py exports/schedule_after.json data/cit_public.json data/sample_disruption.json
+```
+
+Validator Output:
+```
+============================================================
+   CIT OFFICIAL TIMETABLE & VENUE VALIDATOR (PURE PYTHON)   
+============================================================
+Target File:      exports/schedule.json
+Schedule Valid:   True
+Hard Violations:  0
+Soft Penalty:     1300
+Booking Score:    136
+============================================================
+```
+
+---
+
 ## 🧪 Running Automated Tests
 
 Run the complete backend test suite (55 test cases across 7 test modules):
@@ -122,6 +156,44 @@ All 55 tests pass 100%:
 
 ---
 
+## ☁️ Production Cloud Deployment
+
+### 1. Render Blueprint (Recommended)
+This repository includes a pre-configured `render.yaml` blueprint defining:
+- **Backend API**: Python 3.10 with Uvicorn ASGI server and a persistent 1 GB SQLite disk mount (`/data/cit_schedule.db`).
+- **Frontend UI**: Node 20 Next.js 14 production service.
+
+To deploy:
+1. Connect this repository to [Render.com](https://render.com).
+2. Choose **New > Blueprint** and select the repository.
+3. Render automatically provisions both services with zero configuration.
+
+### 2. Docker Deployment
+A standalone `Dockerfile` is provided for containerized cloud hosts (AWS ECS, Google Cloud Run, Railway, DigitalOcean):
+```powershell
+# Build container image
+docker build -t cit-scheduling-api .
+
+# Run container on port 8000
+docker run -p 8000:8000 -e JWT_SECRET="your-production-secret" cit-scheduling-api
+```
+
+### 3. Vercel Frontend Deployment
+1. Import the `/frontend` directory to [Vercel](https://vercel.com).
+2. Set the Environment Variable:
+   - `NEXT_PUBLIC_API_URL`: `https://your-backend-api-url.onrender.com`
+3. Click Deploy.
+
+### 4. Cold-Start Prevention & Health Checks
+Free-tier cloud hosts (e.g., Render free web service) sleep after 15 minutes of inactivity.
+- **Healthcheck URLs**: `GET /health` and `GET /api/health` return HTTP 200:
+  ```json
+  {"status": "healthy", "service": "cit-scheduling-backend", "institute": "Chilika Institute of Technology"}
+  ```
+- **Keep-Alive**: Set up a free 10-minute ping using [UptimeRobot](https://uptimerobot.com) or GitHub Actions cron to ping `https://<backend-url>/health` to eliminate cold-start delays during evaluation.
+
+---
+
 ## 📁 Generated Exports
 The platform generates and exports valid schedules conforming to the official competition specification:
 - `exports/schedule.json`: Contains 189 weekly sessions + 41 midsem exams with **0 hard violations**.
@@ -133,4 +205,5 @@ The platform generates and exports valid schedules conforming to the official co
 - The academic timetable covers recurring weekly sessions across Mon–Fri (P1–P9) and evening event slots (P10–P13).
 - SQLite is utilized for self-contained, reproducible, zero-setup local execution. For multi-datacenter deployments, PostgreSQL with row-level locks is recommended.
 - Visiting faculty (Prof. Vikram Rao, F08) teaches 3 lectures of CS204 and is on campus exclusively on Tuesday and Thursday; the course daily repeat is minimized via soft penalty objective (+10) to permit clash-free feasibility.
+
 
