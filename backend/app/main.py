@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .loader import init_db
 from .models import Room
-from .routers import auth_router, admin_router, timetable_router, booking_router, ai_router
+from .routers import auth_router, admin_router, timetable_router, booking_router, ai_router, conflict_router, analytics_router
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
@@ -46,6 +46,8 @@ app.include_router(admin_router.router)
 app.include_router(timetable_router.router)
 app.include_router(booking_router.router)
 app.include_router(ai_router.router)
+app.include_router(conflict_router.router)
+app.include_router(analytics_router.router)
 
 @app.on_event("startup")
 def on_startup():

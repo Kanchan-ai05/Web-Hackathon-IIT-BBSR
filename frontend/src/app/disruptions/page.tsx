@@ -3,24 +3,23 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
-interface DisruptionDiffItem {
-  session_id: string;
-  course_id?: string;
-  course_title?: string;
-  faculty?: string;
-  groups?: string[];
-  old_slot: { day: string; start_period: number; room: string };
-  new_slot: { day: string; start_period: number; room: string };
-  reason: string;
-}
-
-interface DisruptionResult {
-  disruption_id: string;
-  status: string;
+interface SolutionAlternative {
+  strategy_id: string;
+  strategy_name: string;
+  strategy_description: string;
+  rank: number;
+  is_recommended: boolean;
+  disruption_score: number;
   moved_count: number;
+  unchanged_count: number;
+  timing_changes_count: number;
+  room_only_changes_count: number;
+  affected_groups_count: number;
+  new_sessions_count: number;
   soft_penalty: number;
-  diff: DisruptionDiffItem[];
-  new_timetable: any[];
+  moved_diff: any[];
+  complete_diff: any[];
+  timetable: any[];
 }
 
 export default function DisruptionsPage() {
@@ -31,56 +30,129 @@ export default function DisruptionsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Selected preset or custom disruption
-  const [disruptionId, setDisruptionId] = useState("DISRUPT-F01-WED");
-  const [disruptionType, setDisruptionType] = useState<"faculty_leave" | "room_closure">("faculty_leave");
-  const [targetEntity, setTargetEntity] = useState("F01");
-  const [targetDay, setTargetDay] = useState("Wednesday");
-  const [disruptionResult, setDisruptionResult] = useState<DisruptionResult | null>(null);
+  // 5 Disruption Types Form State
+  const [disruptionType, setDisruptionType] = useState<
+    "faculty_leave" | "room_closure" | "new_session" | "event_timing_change" | "emergency_venue"
+  >("faculty_leave");
 
-  // Preset 1: Official Sample Disruption (Prof. Rohit Sahoo leave)
+  const [targetEntity, setTargetEntity] = useState("F01");
+  const [targetDay, setTargetDay] = useState("THU");
+  const [targetPeriods, setTargetPeriods] = useState("1,2,3,4,5,6,7,8,9");
+  const [customReason, setCustomReason] = useState("Emergency Medical Leave");
+
+  // New Session fields
+  const [newCourseId, setNewCourseId] = useState("CS101");
+  const [newGroupId, setNewGroupId] = useState("Y1-A");
+  const [newFacultyId, setNewFacultyId] = useState("F03");
+  const [newSessionSize, setNewSessionSize] = useState(90);
+
+  // Multi-Solution State
+  const [solutions, setSolutions] = useState<SolutionAlternative[]>([]);
+  const [selectedSolutionIdx, setSelectedSolutionIdx] = useState<number>(0);
+  const [showOnlyMoved, setShowOnlyMoved] = useState(true);
+
+  // Presets
   const handleLoadSample = () => {
-    setDisruptionId("DISRUPT-F01-WED");
     setDisruptionType("faculty_leave");
     setTargetEntity("F01");
-    setTargetDay("Wednesday");
-    setMessage("Loaded sample disruption: Prof. Rohit Sahoo (F01) emergency medical leave on Wednesday.");
+    setTargetDay("THU");
+    setTargetPeriods("1,2,3,4,5,6,7,8,9");
+    setCustomReason("Dr. Ananya Mishra on emergency medical leave Thursday");
+    setMessage("Loaded Scenario 1: Dr. Ananya Mishra (F01) emergency leave Thursday.");
   };
 
-  // Preset 2: Room R05 AC Breakdown
   const handleLoadRoomMaintenance = () => {
-    setDisruptionId("DISRUPT-R05-MAINT");
     setDisruptionType("room_closure");
-    setTargetEntity("R05");
-    setTargetDay("Thursday");
-    setMessage("Loaded disruption: Room R05 AC maintenance closure on Thursday.");
+    setTargetEntity("CR-101");
+    setTargetDay("TUE");
+    setTargetPeriods("1,2,3,4,5");
+    setCustomReason("Air conditioner repair & electrical inspection");
+    setMessage("Loaded Scenario 2: Room CR-101 AC maintenance Tuesday morning.");
   };
 
-  // Run CP-SAT minimal-displacement solver
-  const handleRunDisruptionSolver = async () => {
+  const handleLoadNewSessionPreset = () => {
+    setDisruptionType("new_session");
+    setNewCourseId("CS101");
+    setNewGroupId("Y1-A");
+    setNewFacultyId("F03");
+    setNewSessionSize(90);
+    setCustomReason("Midsem remedial programming tutorial addition");
+    setMessage("Loaded Scenario 3: Remedial tutorial session addition.");
+  };
+
+  const handleLoadEmergencyVenue = () => {
+    setDisruptionType("emergency_venue");
+    setTargetEntity("AUD");
+    setTargetDay("WED");
+    setTargetPeriods("3,4,5");
+    setCustomReason("Dean's Emergency All-Hands Institutional Address");
+    setMessage("Loaded Scenario 4: Priority emergency institutional booking in Auditorium.");
+  };
+
+  // Run CP-SAT multi-alternative rescheduler
+  const handleRunMultiSolver = async () => {
     if (!token) {
-      setError("Authentication required to run disruption engine");
+      setError("Authentication required to run the disruption solver");
       return;
     }
     setLoading(true);
     setError(null);
     setMessage(null);
-    setDisruptionResult(null);
+    setSolutions([]);
+
+    const periodsList = targetPeriods
+      .split(",")
+      .map((p) => parseInt(p.trim(), 10))
+      .filter((p) => !isNaN(p) && p >= 1 && p <= 13);
 
     let spec: any = {
-      disruption_id: disruptionId,
+      disruption_id: `DISRUPT-${Date.now()}`,
       created_at: new Date().toISOString(),
-      type: disruptionType,
+      reason: customReason,
     };
 
     if (disruptionType === "faculty_leave") {
-      spec.faculty_id = targetEntity;
-      spec.unavailable_windows = [{ day: targetDay, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9] }];
-      spec.reason = `Emergency leave for faculty ${targetEntity} on ${targetDay}`;
-    } else {
-      spec.room_id = targetEntity;
-      spec.unavailable_windows = [{ day: targetDay, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9] }];
-      spec.reason = `Facility maintenance for room ${targetEntity} on ${targetDay}`;
+      spec.faculty_leaves = [{
+        faculty_id: targetEntity,
+        day: targetDay,
+        periods: periodsList.length > 0 ? periodsList : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        reason: customReason,
+      }];
+    } else if (disruptionType === "room_closure") {
+      spec.room_closures = [{
+        room_id: targetEntity,
+        day: targetDay,
+        periods: periodsList.length > 0 ? periodsList : [1, 2, 3, 4, 5],
+        reason: customReason,
+      }];
+    } else if (disruptionType === "new_session") {
+      spec.new_sessions = [{
+        id: `NEW-SESS-${Date.now()}`,
+        course_id: newCourseId,
+        kind: "tutorial",
+        groups: [newGroupId],
+        faculty_id: newFacultyId,
+        size: Number(newSessionSize),
+        duration: 1,
+        room_types: ["classroom", "lecture_hall"],
+        needs_accessible: false,
+        basket_slot: null,
+        fixed_slot: null,
+      }];
+    } else if (disruptionType === "event_timing_change") {
+      spec.event_timing_changes = [{
+        room_id: targetEntity,
+        new_day: targetDay,
+        new_periods: periodsList,
+        reason: customReason,
+      }];
+    } else if (disruptionType === "emergency_venue") {
+      spec.emergency_venue_requirements = [{
+        room_id: targetEntity,
+        day: targetDay,
+        periods: periodsList,
+        title: customReason,
+      }];
     }
 
     try {
@@ -98,22 +170,39 @@ export default function DisruptionsPage() {
         throw new Error(data.detail || "Disruption resolution failed");
       }
 
-      setDisruptionResult(data);
-      setMessage(
-        `✓ Rescheduling solved! Only ${data.moved_count} sessions displaced (minimal moves ≤ 5). Awaiting Admin approval.`
-      );
+      if (data.solutions && data.solutions.length > 0) {
+        setSolutions(data.solutions);
+        setSelectedSolutionIdx(0);
+        setMessage(
+          `✓ Successfully generated ${data.solutions.length} valid alternative solutions with zero hard clashes!`
+        );
+      } else if (data.status === "conflict") {
+        setError(
+          data.message + " Constraints preventing resolution: " + (data.infeasibility_reasons || []).join("; ")
+        );
+      } else {
+        setError("No valid clash-free alternative could be generated.");
+      }
     } catch (err: any) {
-      setError(err.message || "Disruption solver error");
+      setError(err.message || "Failed to execute disruption engine");
     } finally {
       setLoading(false);
     }
   };
 
-  // Admin approves and applies the new schedule
-  const handleApplyChanges = async () => {
-    if (!token || !disruptionResult) return;
+  // Apply chosen solution (Admin only)
+  const handleApplySelectedSolution = async () => {
+    if (!token || user?.role !== "admin") {
+      setError("Admin authorization required to approve and apply schedule changes");
+      return;
+    }
+    const sol = solutions[selectedSolutionIdx];
+    if (!sol) return;
+
     setApplying(true);
     setError(null);
+    setMessage(null);
+
     try {
       const res = await fetch(`${apiUrl}/api/timetable/disrupt/apply`, {
         method: "POST",
@@ -122,282 +211,422 @@ export default function DisruptionsPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          disruption_id: disruptionResult.disruption_id,
-          new_timetable: disruptionResult.new_timetable,
+          disruption_id: `APPROVED-${sol.strategy_id}`,
+          new_timetable: sol.timetable,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail?.message || data.detail || "Apply failed");
+      if (!res.ok) {
+        throw new Error(data.detail?.message || "Failed to apply schedule");
+      }
 
-      setMessage("✓ Rescheduled timetable successfully approved and applied to live campus schedule!");
-      setDisruptionResult((prev) => (prev ? { ...prev, status: "approved" } : null));
+      setMessage(`✓ ${sol.strategy_name} successfully approved and written to the database by Admin!`);
     } catch (err: any) {
-      setError(err.message || "Failed to apply changes");
+      setError(err.message || "Approval failed");
     } finally {
       setApplying(false);
     }
   };
 
-  // Download schedule_after.json
-  const handleDownloadAfter = () => {
-    window.open(`${apiUrl}/exports/schedule_after.json`, "_blank");
-  };
+  const currentSolution = solutions[selectedSolutionIdx];
+  const displayedDiff = currentSolution
+    ? showOnlyMoved
+      ? currentSolution.moved_diff
+      : currentSolution.complete_diff
+    : [];
 
   return (
-    <main className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-5">
+    <div className="space-y-6">
+      {/* Top Banner */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-1">
             <span className="text-2xl">⚡</span>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Campus Disruption & Minimal-Displacement Rescheduler
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+              Intelligent Multi-Alternative Disruption Rescheduling Engine
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Re-solves schedule with warm-start hints and high displacement penalty (≤ 5 moves) preserving zero hard clashes
+          <p className="text-xs text-slate-500">
+            Automates last-minute institutional disruptions. Generates up to 3 valid CP-SAT solutions with zero hard clashes, ranked by disruption score.
           </p>
         </div>
 
-        <button
-          onClick={handleDownloadAfter}
-          className="text-xs font-semibold px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl shadow-xs transition-colors"
-        >
-          📥 Download schedule_after.json
-        </button>
+        {user?.role !== "admin" && (
+          <div className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200">
+            <span>🛡️ Preview Mode: Only Dean's Office (Admin) can apply schedules</span>
+          </div>
+        )}
       </div>
 
-      {/* Notifications */}
-      {message && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
-          <span>{message}</span>
-          <button onClick={() => setMessage(null)} className="text-emerald-700 font-bold ml-4">✕</button>
-        </div>
-      )}
-      {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between">
-          <span>✕ {error}</span>
-          <button onClick={() => setError(null)} className="text-rose-700 font-bold ml-4">✕</button>
-        </div>
-      )}
-
-      {/* Disruption Configuration Panel */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-3 border-b border-slate-100">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Configure Disruption Scenario
-            </h2>
-            <p className="text-xs text-slate-500">
-              Select a realistic emergency preset or define custom constraints
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleLoadSample}
-              className="text-xs font-semibold px-3 py-1.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-lg border border-sky-200 transition-colors"
-            >
-              Preset: Prof. Sahoo Leave (Wed)
-            </button>
-            <button
-              onClick={handleLoadRoomMaintenance}
-              className="text-xs font-semibold px-3 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors"
-            >
-              Preset: Room R05 Maint (Thu)
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Disruption ID:</label>
-            <input
-              type="text"
-              value={disruptionId}
-              onChange={(e) => setDisruptionId(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl font-mono"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Disruption Type:</label>
-            <select
-              value={disruptionType}
-              onChange={(e: any) => {
-                setDisruptionType(e.target.value);
-                setTargetEntity(e.target.value === "faculty_leave" ? "F01" : "R05");
-              }}
-              className="w-full p-2.5 border border-slate-300 rounded-xl font-medium"
-            >
-              <option value="faculty_leave">Faculty Emergency Leave</option>
-              <option value="room_closure">Venue / Room Maintenance</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">
-              Target {disruptionType === "faculty_leave" ? "Faculty ID" : "Room ID"}:
-            </label>
-            <input
-              type="text"
-              value={targetEntity}
-              onChange={(e) => setTargetEntity(e.target.value)}
-              placeholder={disruptionType === "faculty_leave" ? "e.g. F01" : "e.g. R05"}
-              className="w-full p-2.5 border border-slate-300 rounded-xl font-mono font-bold"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Affected Day:</label>
-            <select
-              value={targetDay}
-              onChange={(e) => setTargetDay(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl font-medium"
-            >
-              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="pt-2 flex justify-end">
+      {/* Preset Quick Scenarios */}
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+        <span className="text-xs font-semibold text-slate-600 block">
+          One-Click Incident Presets:
+        </span>
+        <div className="flex flex-wrap gap-2">
           <button
-            onClick={handleRunDisruptionSolver}
-            disabled={loading}
-            className="px-5 py-2.5 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
+            type="button"
+            onClick={handleLoadSample}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 shadow-xs transition-colors"
           >
-            {loading ? (
-              <>
-                <span className="animate-spin text-sm">⏳</span> Rescheduling CP-SAT...
-              </>
-            ) : (
-              <>
-                <span>⚡</span> Run Minimal-Displacement Solver
-              </>
-            )}
+            👨‍🏫 Preset 1: Dr. Ananya Mishra Leave (Thursday)
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadRoomMaintenance}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 shadow-xs transition-colors"
+          >
+            🛠️ Preset 2: Room CR-101 AC Maintenance (Tuesday)
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadNewSessionPreset}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 shadow-xs transition-colors"
+          >
+            📚 Preset 3: Remedial Session Addition (CS101)
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadEmergencyVenue}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 shadow-xs transition-colors"
+          >
+            🏛️ Preset 4: Emergency All-Hands Address (Auditorium)
           </button>
         </div>
       </div>
 
-      {/* Disruption Solution & Diff Results */}
-      {disruptionResult && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-slate-100">
+      {/* Disruption Configuration Form */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <h2 className="text-sm font-bold text-slate-900">Configure Institutional Incident</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          {/* Incident Type */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+              Disruption Type
+            </label>
+            <select
+              value={disruptionType}
+              onChange={(e) => setDisruptionType(e.target.value as any)}
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 font-medium"
+            >
+              <option value="faculty_leave">Faculty Emergency Leave</option>
+              <option value="room_closure">Classroom / Lab Closure</option>
+              <option value="new_session">New Session Addition</option>
+              <option value="event_timing_change">Event Timing Change</option>
+              <option value="emergency_venue">Emergency Venue Claim</option>
+            </select>
+          </div>
+
+          {/* Target Entity */}
+          {disruptionType !== "new_session" && (
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📊</span>
-                <h3 className="text-base font-bold text-slate-900">
-                  Rescheduling Result & Schedule Diff
-                </h3>
-                <span
-                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                    disruptionResult.status === "approved"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-amber-100 text-amber-800"
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                {disruptionType === "faculty_leave" ? "Faculty ID" : "Room / Venue ID"}
+              </label>
+              <input
+                type="text"
+                value={targetEntity}
+                onChange={(e) => setTargetEntity(e.target.value)}
+                placeholder="e.g. F01 or CR-101"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+              />
+            </div>
+          )}
+
+          {/* Target Day */}
+          {disruptionType !== "new_session" && (
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                Day of Week
+              </label>
+              <select
+                value={targetDay}
+                onChange={(e) => setTargetDay(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium"
+              >
+                {["MON", "TUE", "WED", "THU", "FRI"].map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Target Periods */}
+          {disruptionType !== "new_session" && (
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                Affected Periods
+              </label>
+              <input
+                type="text"
+                value={targetPeriods}
+                onChange={(e) => setTargetPeriods(e.target.value)}
+                placeholder="1,2,3,4,5"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+              />
+            </div>
+          )}
+
+          {/* Reason */}
+          <div className={disruptionType === "new_session" ? "md:col-span-4" : ""}>
+            <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+              Incident Reason / Note
+            </label>
+            <input
+              type="text"
+              value={customReason}
+              onChange={(e) => setCustomReason(e.target.value)}
+              placeholder="e.g. Emergency leave, AC breakdown"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+            />
+          </div>
+        </div>
+
+        {/* New Session Specific Fields */}
+        {disruptionType === "new_session" && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Course ID</label>
+              <input
+                type="text"
+                value={newCourseId}
+                onChange={(e) => setNewCourseId(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Student Group</label>
+              <input
+                type="text"
+                value={newGroupId}
+                onChange={(e) => setNewGroupId(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Faculty ID</label>
+              <input
+                type="text"
+                value={newFacultyId}
+                onChange={(e) => setNewFacultyId(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Class Size</label>
+              <input
+                type="number"
+                value={newSessionSize}
+                onChange={(e) => setNewSessionSize(Number(e.target.value))}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleRunMultiSolver}
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <span className="animate-spin">🔄</span> Running CP-SAT Multi-Solution Solver...
+              </>
+            ) : (
+              <>
+                <span>🚀</span> Generate Alternative Solutions
+              </>
+            )}
+          </button>
+        </div>
+
+        {message && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+            {message}
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 font-medium">
+            ❌ {error}
+          </div>
+        )}
+      </div>
+
+      {/* Solutions Comparison Tabs */}
+      {solutions.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {solutions.map((sol, idx) => (
+                <button
+                  key={sol.strategy_id}
+                  onClick={() => setSelectedSolutionIdx(idx)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    selectedSolutionIdx === idx
+                      ? "bg-indigo-50 border-indigo-400 text-indigo-800 shadow-xs"
+                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {disruptionResult.status === "approved" ? "Approved & Applied" : "Pending Approval"}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Warm-start solve displaced exactly <strong>{disruptionResult.moved_count}</strong> sessions (≤ 5 target met). 0 hard violations.
-              </p>
+                  <div className="flex items-center gap-1.5">
+                    {sol.is_recommended && <span>⭐</span>}
+                    <span>Option {idx + 1}: {sol.strategy_name}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-normal mt-0.5">
+                    Disruption Score: {sol.disruption_score} | Moved: {sol.moved_count}
+                  </div>
+                </button>
+              ))}
             </div>
 
-            {user?.role === "admin" && disruptionResult.status !== "approved" && (
+            {/* Admin Apply Button */}
+            {user?.role === "admin" && (
               <button
-                onClick={handleApplyChanges}
+                type="button"
+                onClick={handleApplySelectedSolution}
                 disabled={applying}
-                className="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
-                {applying ? "Applying to Database..." : "✓ Approve & Apply Changes to Timetable"}
+                {applying ? "Applying..." : "✓ Approve & Apply Selected Solution"}
               </button>
             )}
           </div>
 
-          {/* Metric Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-500 block">Total Displaced:</span>
-              <span className="font-extrabold text-base text-slate-900">
-                {disruptionResult.moved_count} sessions
-              </span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-500 block">Clashes:</span>
-              <span className="font-extrabold text-base text-emerald-600">
-                0 Hard Violations
-              </span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-500 block">Soft Penalty:</span>
-              <span className="font-extrabold text-base text-slate-900">
-                {disruptionResult.soft_penalty}
-              </span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-500 block">Audit Status:</span>
-              <span className="font-extrabold text-base text-sky-700 capitalize">
-                {disruptionResult.status.replace("_", " ")}
-              </span>
-            </div>
-          </div>
+          {/* Selected Solution Metrics Card */}
+          {currentSolution && (
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span>{currentSolution.strategy_name}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold">
+                      Rank #{currentSolution.rank}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {currentSolution.strategy_description}
+                  </p>
+                </div>
 
-          {/* Visual Diff Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
-                <tr>
-                  <th className="p-3">Session ID</th>
-                  <th className="p-3">Course Title</th>
-                  <th className="p-3">Faculty / Groups</th>
-                  <th className="p-3 bg-rose-50/50 text-rose-900">Previous Slot (Old)</th>
-                  <th className="p-3 bg-emerald-50/50 text-emerald-900">Rescheduled Slot (New)</th>
-                  <th className="p-3">Reason for Move</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {disruptionResult.diff.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-6 text-center text-slate-400">
-                      No sessions needed displacement.
-                    </td>
-                  </tr>
-                ) : (
-                  disruptionResult.diff.map((item) => (
-                    <tr key={item.session_id} className="hover:bg-slate-50">
-                      <td className="p-3 font-mono font-bold text-sky-700 whitespace-nowrap">
-                        {item.session_id}
-                      </td>
-                      <td className="p-3 font-semibold text-slate-900">
-                        {item.course_title || item.course_id || item.session_id}
-                      </td>
-                      <td className="p-3 text-slate-600">
-                        <div className="font-medium text-slate-800">{item.faculty || "-"}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          {item.groups ? item.groups.join(", ") : "-"}
-                        </div>
-                      </td>
-                      <td className="p-3 font-mono text-rose-700 bg-rose-50/20 whitespace-nowrap">
-                        {item.old_slot ? `${item.old_slot.day} P${item.old_slot.start_period} in ${item.old_slot.room}` : "-"}
-                      </td>
-                      <td className="p-3 font-mono font-bold text-emerald-700 bg-emerald-50/20 whitespace-nowrap">
-                        {item.new_slot ? `${item.new_slot.day} P${item.new_slot.start_period} in ${item.new_slot.room}` : "-"}
-                      </td>
-                      <td className="p-3 text-slate-500 text-[11px] max-w-xs">
-                        {item.reason}
-                      </td>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-500 font-medium">Filter view:</span>
+                  <button
+                    onClick={() => setShowOnlyMoved(!showOnlyMoved)}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700"
+                  >
+                    {showOnlyMoved ? "Showing: Moved Sessions Only" : "Showing: All Sessions (189+)"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Solution Metric Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Disruption Score</div>
+                  <div className="text-xl font-black text-indigo-700 mt-0.5">{currentSolution.disruption_score}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Sessions Moved</div>
+                  <div className="text-xl font-black text-rose-600 mt-0.5">{currentSolution.moved_count}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Timing Changes</div>
+                  <div className="text-xl font-black text-amber-600 mt-0.5">{currentSolution.timing_changes_count}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Room Changes</div>
+                  <div className="text-xl font-black text-sky-600 mt-0.5">{currentSolution.room_only_changes_count}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Soft Penalty</div>
+                  <div className="text-xl font-black text-slate-800 mt-0.5">{currentSolution.soft_penalty}</div>
+                </div>
+              </div>
+
+              {/* Before-and-After Diff Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Session & Course</th>
+                      <th className="py-2.5 px-3">Faculty & Cohort</th>
+                      <th className="py-2.5 px-3">Original Slot</th>
+                      <th className="py-2.5 px-3">New Rescheduled Slot</th>
+                      <th className="py-2.5 px-3">Explanation</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {displayedDiff.map((item: any, idx: number) => {
+                      const isMoved = item.status === "moved";
+                      return (
+                        <tr
+                          key={idx}
+                          className={`hover:bg-slate-50/80 transition-colors ${
+                            isMoved ? "bg-amber-50/30" : ""
+                          }`}
+                        >
+                          <td className="py-3 px-3">
+                            <span
+                              className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${
+                                isMoved
+                                  ? item.change_type === "new_session"
+                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                    : "bg-amber-100 text-amber-800 border-amber-300"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              {isMoved
+                                ? item.change_type === "new_session"
+                                  ? "New Session"
+                                  : "Rescheduled"
+                                : "Unchanged"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-slate-900">{item.session_id}</div>
+                            <div className="text-[10px] text-slate-400">{item.course_title || item.course_id}</div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="font-semibold text-slate-800">{item.faculty_name || item.faculty_id}</div>
+                            <div className="text-[10px] text-slate-400">{(item.groups || []).join(", ")}</div>
+                          </td>
+                          <td className="py-3 px-3 font-mono">
+                            {item.old_slot ? (
+                              <span className="text-slate-500">
+                                {item.old_slot.day} P{item.old_slot.start_period} in {item.old_slot.room_id}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 italic">None (New)</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 font-mono font-bold">
+                            {item.new_slot ? (
+                              <span className={isMoved ? "text-indigo-700" : "text-slate-700"}>
+                                {item.new_slot.day} P{item.new_slot.start_period} in {item.new_slot.room_id}
+                              </span>
+                            ) : (
+                              "--"
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-slate-600 max-w-sm">
+                            {item.reason}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </main>
+    </div>
   );
 }

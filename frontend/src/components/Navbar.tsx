@@ -22,6 +22,8 @@ export default function Navbar() {
     { href: "/", label: "Overview", icon: "🏛️" },
     { href: "/timetable", label: "Timetable & Exams", icon: "📅" },
     { href: "/bookings", label: "Venue Bookings", icon: "🎫" },
+    { href: "/conflicts", label: "Conflict Monitor", icon: "⚠️" },
+    { href: "/analytics", label: "Campus Analytics", icon: "📊" },
     { href: "/disruptions", label: "Disruption Engine", icon: "⚡" },
   ];
 
