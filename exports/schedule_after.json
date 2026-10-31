@@ -11,8 +11,8 @@
       },
       "new": {
         "day": "TUE",
-        "start_period": 3,
-        "room_id": "CR-102"
+        "start_period": 1,
+        "room_id": "LH-1"
       },
       "why": "Room CR-101 is closed for maintenance on TUE"
     },
@@ -24,8 +24,8 @@
         "room_id": "CR-101"
       },
       "new": {
-        "day": "TUE",
-        "start_period": 5,
+        "day": "WED",
+        "start_period": 2,
         "room_id": "AUD"
       },
       "why": "Room CR-101 is closed for maintenance on TUE"
@@ -38,8 +38,8 @@
         "room_id": "CR-101"
       },
       "new": {
-        "day": "TUE",
-        "start_period": 4,
+        "day": "WED",
+        "start_period": 1,
         "room_id": "AUD"
       },
       "why": "Room CR-101 is closed for maintenance on TUE"
@@ -52,8 +52,8 @@
         "room_id": "CR-101"
       },
       "new": {
-        "day": "TUE",
-        "start_period": 2,
+        "day": "MON",
+        "start_period": 4,
         "room_id": "AUD"
       },
       "why": "Room CR-101 is closed for maintenance on TUE"
@@ -67,7 +67,7 @@
       },
       "new": {
         "day": "MON",
-        "start_period": 9,
+        "start_period": 2,
         "room_id": "AUD"
       },
       "why": "Room CR-101 is closed for maintenance on TUE"
@@ -76,9 +76,9 @@
       "session_id": "CS101-REMEDIAL",
       "old": null,
       "new": {
-        "day": "FRI",
-        "start_period": 9,
-        "room_id": "LH-3"
+        "day": "MON",
+        "start_period": 1,
+        "room_id": "LH-5"
       },
       "why": "Newly added curriculum session scheduled"
     }
@@ -243,8 +243,8 @@
     {
       "session_id": "HS101-B-L1",
       "day": "TUE",
-      "start_period": 3,
-      "room_id": "CR-102"
+      "start_period": 1,
+      "room_id": "LH-1"
     },
     {
       "session_id": "HS101-B-L2",
@@ -1112,14 +1112,14 @@
     },
     {
       "session_id": "CE301-L2",
-      "day": "TUE",
-      "start_period": 5,
+      "day": "WED",
+      "start_period": 2,
       "room_id": "AUD"
     },
     {
       "session_id": "CE301-L3",
-      "day": "TUE",
-      "start_period": 4,
+      "day": "WED",
+      "start_period": 1,
       "room_id": "AUD"
     },
     {
@@ -1130,8 +1130,8 @@
     },
     {
       "session_id": "CE302-L2",
-      "day": "TUE",
-      "start_period": 2,
+      "day": "MON",
+      "start_period": 4,
       "room_id": "AUD"
     },
     {
@@ -1143,7 +1143,7 @@
     {
       "session_id": "CE303-L1",
       "day": "MON",
-      "start_period": 9,
+      "start_period": 2,
       "room_id": "AUD"
     },
     {
@@ -1220,10 +1220,10 @@
     },
     {
       "session_id": "CS101-REMEDIAL",
-      "day": "FRI",
-      "start_period": 9,
-      "room_id": "LH-3"
+      "day": "MON",
+      "start_period": 1,
+      "room_id": "LH-5"
     }
   ],
-  "soft_penalty": 1355
+  "soft_penalty": 1330
 }

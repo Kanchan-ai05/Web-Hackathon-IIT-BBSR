@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useAiSettings } from "../../context/AiContext";
 
 interface TimetableSlot {
   slot_id: number;
@@ -46,6 +47,39 @@ const PERIODS = [
 
 export default function TimetablePage() {
   const { user, token, apiUrl } = useAuth();
+  const { getHeaders, isConnected, modelName } = useAiSettings();
+
+  // Ask Timetable AI state
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [aiSource, setAiSource] = useState<string | null>(null);
+  const [aiAsking, setAiAsking] = useState(false);
+  const [showAiCard, setShowAiCard] = useState(false);
+
+  const handleAskAi = async (customQuery?: string) => {
+    const q = customQuery || aiQuestion;
+    if (!q.trim() || !token) return;
+    setAiAsking(true);
+    setAiAnswer(null);
+    try {
+      const res = await fetch(`${apiUrl}/api/ai/ask-timetable`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...getHeaders(),
+        },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = await res.json();
+      setAiAnswer(data.answer);
+      setAiSource(data.engine || "CIT Knowledge Base");
+    } catch (err: any) {
+      setAiAnswer("Unable to answer query. Please check your backend connection or configure your API key.");
+    } finally {
+      setAiAsking(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<"regular" | "exams">("regular");
   const [metadata, setMetadata] = useState<any>(null);
@@ -333,6 +367,93 @@ export default function TimetablePage() {
           <button onClick={() => setError(null)} className="text-rose-700 font-bold ml-4">✕</button>
         </div>
       )}
+
+      {/* Ask Timetable AI Assistant */}
+      <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50 rounded-2xl border border-sky-100 p-4 sm:p-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl p-1.5 bg-white rounded-lg shadow-2xs border border-sky-100">🤖</span>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                Ask Timetable AI Assistant
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${isConnected ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>
+                  {isConnected ? modelName : "Offline Rules"}
+                </span>
+              </h2>
+              <p className="text-[11px] text-slate-500">Ask natural questions about lecture times, lunch restrictions, exam slots, and room allocations</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAiCard(!showAiCard)}
+            className="text-xs font-semibold text-sky-700 hover:text-sky-900 bg-white px-3 py-1.5 rounded-lg border border-sky-200 shadow-2xs"
+          >
+            {showAiCard ? "Hide Assistant ▲" : "Ask a Question ▼"}
+          </button>
+        </div>
+
+        {showAiCard && (
+          <div className="mt-3 pt-3 border-t border-sky-200/60 space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAskAi()}
+                placeholder='e.g., "What are the lunch break hours?" or "When are midsem exams scheduled?"'
+                className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-2xs"
+              />
+              <button
+                onClick={() => handleAskAi()}
+                disabled={aiAsking || !aiQuestion.trim()}
+                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5"
+              >
+                {aiAsking ? (
+                  <>
+                    <span className="animate-spin">🔄</span> Thinking...
+                  </>
+                ) : (
+                  <>
+                    <span>✨</span> Ask AI
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Quick Prompt Suggestions */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span className="text-slate-500 font-semibold mr-1">Quick Prompts:</span>
+              {[
+                "What are the lunch hours?",
+                "How do midsem exam room capacities work?",
+                "Which slots are allowed for 3-hour labs?",
+                "When do evening tech fest bookings take place?",
+              ].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => {
+                    setAiQuestion(suggestion);
+                    handleAskAi(suggestion);
+                  }}
+                  className="bg-white/80 hover:bg-white text-slate-700 px-2.5 py-1 rounded-lg border border-sky-200/80 transition-colors shadow-2xs"
+                >
+                  💡 {suggestion}
+                </button>
+              ))}
+            </div>
+
+            {/* Answer Display */}
+            {aiAnswer && (
+              <div className="mt-3 p-3.5 rounded-xl bg-white border border-sky-200 text-xs text-slate-800 shadow-xs space-y-1 animate-in fade-in">
+                <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                  <span>SOURCE: {aiSource}</span>
+                  <button onClick={() => setAiAnswer(null)} className="text-slate-400 hover:text-slate-600">✕ Close</button>
+                </div>
+                <p className="text-slate-800 leading-relaxed font-normal">{aiAnswer}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Solver Metric Badge */}
       {solverResult && (

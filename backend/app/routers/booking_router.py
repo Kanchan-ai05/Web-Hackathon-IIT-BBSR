@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Header
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import BookingRequest, User, AuditLog, Room, TimetableSlot
@@ -246,16 +246,22 @@ def process_all_venue_requests(
 @router.post("/nlp-parse")
 def nlp_parse_booking_request(
     text: str = Body(..., embed=True),
+    x_gemini_key: Optional[str] = Header(None, alias="X-Gemini-Key"),
+    x_openai_key: Optional[str] = Header(None, alias="X-OpenAI-Key"),
     current_user: User = Depends(get_current_user)
 ):
     """Natural-language intake: parses English/Hinglish text into structured booking JSON.
     
     Locks role and event category to authenticated user account (anti-bypass).
     """
+    key = x_gemini_key or x_openai_key
+    provider = "openai" if x_openai_key else "gemini"
     return parse_booking_prompt(
         text=text,
         user_role=current_user.role,
-        user_department=current_user.department
+        user_department=current_user.department,
+        api_key=key,
+        provider=provider
     )
 
 @router.post("/explain")

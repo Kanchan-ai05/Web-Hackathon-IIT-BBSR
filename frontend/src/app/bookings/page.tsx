@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useAiSettings } from "../../context/AiContext";
 
 interface BookingItem {
   id: string;
@@ -27,6 +28,7 @@ interface BookingItem {
 
 export default function BookingsPage() {
   const { user, token, apiUrl } = useAuth();
+  const { getHeaders, isConnected, modelName } = useAiSettings();
 
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -217,6 +219,7 @@ export default function BookingsPage() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          ...getHeaders(),
         },
         body: JSON.stringify({ text: nlpPrompt }),
       });
@@ -713,10 +716,26 @@ export default function BookingsPage() {
             </div>
 
             {/* Anti-Bypass Banner */}
-            <div className="mb-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs">
+            <div className="mb-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs">
               <strong className="block font-semibold">🔒 Security Guard Active:</strong>
               Authenticated as <code className="font-mono font-bold">{user?.name}</code> (Role: <code className="font-mono uppercase font-bold">{user?.role}</code>).
               Event category is strictly locked to your authenticated role. Prompt injection or role escalation attempts are automatically neutralized.
+            </div>
+
+            {/* Active Engine Pill */}
+            <div className="mb-4 flex items-center justify-between text-xs px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                <span className="text-slate-600">Engine:</span>
+                <strong className={isConnected ? "text-emerald-700" : "text-slate-700"}>
+                  {parsedDraft?.ai_engine || (isConnected ? `Live LLM (${modelName})` : "Deterministic Rule Parser (Offline)")}
+                </strong>
+              </div>
+              {!isConnected && (
+                <span className="text-[10px] text-sky-600 font-medium">
+                  (Add key in top nav for Gemini)
+                </span>
+              )}
             </div>
 
             {/* Prompt Input */}
