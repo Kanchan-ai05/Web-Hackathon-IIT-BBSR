@@ -121,11 +121,10 @@ export default function Home() {
             <span>🛡️</span> Pure Python Validator & OR-Tools CP-SAT Timetable Engine
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Chilika Institute of Technology (CIT)
+            CIT Nexus: Smart Campus Intelligence Platform
           </h1>
           <p className="mt-2 text-slate-300 text-sm sm:text-base leading-relaxed">
-            Automated clash-free weekly scheduling, midsem exam planning, venue booking resolution, and
-            minimal-displacement disruption recovery.
+            Advanced institutional scheduling, predictive conflict monitoring, AI copilot, and smart facility management for Chilika Institute of Technology.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">

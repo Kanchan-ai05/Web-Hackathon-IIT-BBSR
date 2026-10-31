@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Chilika Institute of Technology - Scheduling Platform",
-  description: "Academic timetable, exam schedule, and venue management platform",
+  title: "CIT Nexus – Smart Campus Intelligence Platform",
+  description: "Advanced institutional scheduling, predictive conflict monitoring, AI copilot, and smart facility management.",
 };
 
 export default function RootLayout({

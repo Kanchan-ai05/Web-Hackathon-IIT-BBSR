@@ -124,10 +124,10 @@ export default function Navbar() {
                 <span className="text-2xl">🏛️</span>
                 <div>
                   <span className="font-bold text-slate-900 tracking-tight text-base sm:text-lg block leading-tight">
-                    Chilika Institute of Technology
+                    CIT Nexus
                   </span>
                   <span className="text-[11px] text-slate-500 font-medium block">
-                    Campus Scheduling Platform
+                    Smart Campus Intelligence Platform
                   </span>
                 </div>
               </Link>

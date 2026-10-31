@@ -731,14 +731,20 @@ class CITExplainabilityService:
                 })
 
         # Explain status
-        if status == "approved":
+        status_norm = str(status).lower()
+        if status_norm in ("approved", "confirmed"):
             reasons.append(f"Request approved because requested venue '{req_room}' was completely clash-free during {assigned_day} periods {assigned_periods}.")
             reasons.append(f"Requester role '{b_data.get('role')}' was within institutional weekly quota allocation.")
-        elif status == "alternative":
+        elif status_norm == "alternative":
             reasons.append(f"Primary venue '{req_room}' collided with higher-priority academic session or event during requested window.")
             reasons.append(f"Rule-based engine automatically detected alternative room/slot satisfying capacity ({attendance}) and features.")
-        elif status == "rejected":
+        elif status_norm == "rejected":
             reasons.append(f"Request rejected: {b_data.get('rejection_reason', 'Unresolvable venue collision or quota cap exceeded')}.")
+        else:
+            reasons.append(f"Request is in '{status}' status awaiting administrator confirmation or automated batch allocation.")
+            reasons.append(f"Institutional priority category '{category}' assigned rank {cat_priority + 1}.")
+            if room:
+                reasons.append(f"Target venue '{req_room}' provides capacity {cap} for requested attendance of {attendance}.")
 
         return {
             "booking_id": booking_id,

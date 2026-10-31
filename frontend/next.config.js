@@ -12,6 +12,10 @@ const nextConfig = {
   },
   trailingSlash: true,
   swcMinify: false,
+  experimental: {
+    cpus: 1,
+    workerThreads: false,
+  },
   ...(isGithubPages
     ? {}
     : {

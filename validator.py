@@ -568,12 +568,21 @@ if __name__ == "__main__":
     print("   CIT OFFICIAL TIMETABLE & VENUE VALIDATOR (PURE PYTHON)   ")
     print("============================================================")
 
-    if len(sys.argv) < 2:
-        print("Usage: python validator.py <schedule.json or schedule_after.json> [dataset.json]")
-        sys.exit(1)
+    import argparse
 
-    schedule_file = sys.argv[1]
-    dataset_file = sys.argv[2] if len(sys.argv) > 2 else "data/cit_public.json"
+    parser = argparse.ArgumentParser(description="CIT Official Timetable & Venue Validator")
+    parser.add_argument("schedule_pos", nargs="?", default=None, help="Path to schedule file")
+    parser.add_argument("dataset_pos", nargs="?", default=None, help="Path to dataset file")
+    parser.add_argument("--schedule", "-s", default=None, help="Path to schedule file")
+    parser.add_argument("--dataset", "-d", default=None, help="Path to dataset file")
+    args = parser.parse_args()
+
+    schedule_file = args.schedule or args.schedule_pos
+    dataset_file = args.dataset or args.dataset_pos or "data/cit_public.json"
+
+    if not schedule_file:
+        print("Usage: python validator.py <schedule.json> [dataset.json] OR python validator.py --schedule <schedule.json>")
+        sys.exit(1)
 
     if not os.path.exists(schedule_file):
         print(f"Error: File not found: {schedule_file}")

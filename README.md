@@ -1,10 +1,10 @@
-# Chilika Institute of Technology (CIT) - Campus Scheduling & Venue Management Platform
+# CIT Nexus – Smart Campus Intelligence Platform
 
-A robust web platform built for **Chilika Institute of Technology (CIT)** that generates semester timetables with zero clashes, schedules midsem exams, manages venue bookings with priority conflict resolution, and handles last-minute disruptions with minimal schedule displacement.
+An advanced, intelligent institutional management and scheduling ecosystem engineered for **Chilika Institute of Technology (CIT)**. Powered by a **dual-datastore architecture (SQLite + MongoDB)**, an **OR-Tools CP-SAT mathematical optimization solver**, a **100% deterministic pure-Python validator (0% LLM)**, and a modern **Next.js 14 App Router** frontend.
 
 ---
 
-## 🌐 Live Deployed Links
+## 🌐 Live Deployed Platform & Links
 
 - 🖥️ **Live Web Platform (GitHub Pages)**: [https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/](https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/)
 - ⚡ **Live Web Platform (Vercel)**: [https://web-hackathon-iit-bbsr.vercel.app](https://web-hackathon-iit-bbsr.vercel.app)
@@ -17,203 +17,200 @@ A robust web platform built for **Chilika Institute of Technology (CIT)** that g
 ## 🏛️ System Architecture
 
 ```
-                  ┌──────────────────────────────────────────────┐
-                  │            Next.js + Tailwind UI             │
-                  │  (Timetable Grid, Bookings, Admin Dashboard)  │
-                  └──────────────────────┬───────────────────────┘
-                                         │ REST API / JWT
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │               FastAPI Backend                │
-                  │  - RBAC Middleware (Admin, Coord, Faculty,   │
-                  │    Club Rep)                                 │
-                  │  - Audit Logger                              │
-                  │  - Dynamic Dataset Loader & Reset            │
-                  └──────┬───────────────────────────────┬───────┘
-                         │                               │
-                         ▼                               ▼
-       ┌──────────────────────────────────┐   ┌──────────────────────────────┐
-       │   backend/validator.py           │   │    OR-Tools CP-SAT Solver    │
-       │   (Pure Python, 0% LLM)          │   │  (Timetable, Exam & Booking  │
-       │   - 13 Hard Constraint Rules     │   │   Optimizer)                 │
-       │   - 6 Soft Penalty Functions     │   └──────────────────────────────┘
-       │   - Booking Priority Checker     │
-       └─────────────────┬────────────────┘
-                         ▼
-       ┌──────────────────────────────────┐
-       │     SQLite Relational Database   │
-       │   (cit_schedule.db / SQLAlchemy) │
-       └──────────────────────────────────┘
+                             CIT Nexus Unified Platform
+                                        │
+        ┌───────────────────────────────┴───────────────────────────────┐
+        ▼                                                               ▼
+┌──────────────────────────────┐                         ┌──────────────────────────────┐
+│    Next.js 14 + Tailwind UI  │                         │       FastAPI Backend        │
+│  - 20 Static / Dynamic Pages │                         │  - 19 Specialized Routers    │
+│  - Categorized Nav Dropdowns │                         │  - RBAC & JWT Middleware     │
+│  - Live API Switcher Modal   │                         │  - Audit Logging System      │
+└───────────────┬──────────────┘                         └──────────────┬───────────────┘
+                │                                                       │
+                │ REST API / JWT Authentication                         │
+                └───────────────────────────────┬───────────────────────┘
+                                                │
+                ┌───────────────────────────────┴───────────────────────────────┐
+                ▼                                                               ▼
+┌──────────────────────────────────────────────┐         ┌──────────────────────────────────────────────┐
+│          Relational Core (SQLite)            │         │        Document Datastore (MongoDB)          │
+│  - Rooms, Faculty, Cohorts, Courses          │         │  - 2D Spatial Nodes & Navigation             │
+│  - Sessions, TimetableSlots, Exams           │         │  - QR Check-In & Headcount Records           │
+│  - Bookings, Unavailabilities, AuditLogs     │         │  - Specialized Lab Hardware Registry         │
+└──────────────────────┬───────────────────────┘         │  - Maintenance Tickets & Green Energy        │
+                       │                                 │  - Emergency Lockdowns & Contingency Plans   │
+                       ▼                                 │  - Resilient File Fallback (`fallback.json`) │
+┌──────────────────────────────────────────────┐         └──────────────────────────────────────────────┘
+│    Google OR-Tools CP-SAT Solver             │
+│  - Stage 1: Feasible Slot Placement          │
+│  - Stage 2: Soft Penalty Minimisation        │
+│  - Warm-Start Minimal-Moves Rescheduling     │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│     Deterministic Validator (0% LLM)         │
+│  - 13 Hard Constraint Rules                  │
+│  - 6 Soft Penalty Functions                  │
+│  - Priority Order Enforcement                │
+└──────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Tech Stack
+## 🚀 Core Platform Modules
 
-- **Frontend**: Next.js 14+ (App Router), React, Tailwind CSS, Lucide Icons
-- **Backend**: FastAPI (Python 3.10+), Pydantic v2, SQLAlchemy ORM
-- **Constraint Solver**: Google OR-Tools (CP-SAT)
-- **Database**: SQLite (`cit_schedule.db`)
-- **Security & RBAC**: JWT (HMAC-SHA256) + bcrypt password hashing
+### 1. Campus Intelligence Dashboard (`/analytics`)
+- **Room Utilisation Analytics**: Total campus room hours, available vs occupied distribution, utilisation percentages, high-demand vs underutilised venues.
+- **Faculty Workload Statistics**: Teaching hours per professor, daily workload distribution, overload/underload indicators.
+- **Course & Cohort Schedules**: Weekly academic load across student groups and departments.
+- **Booking Reports & Exports**: Status distribution (Approved, Alternative, Rejected, Cancelled) with 1-click **CSV exports**.
+
+### 2. Predictive Conflict Monitoring (`/conflicts`)
+- **7 Conflict Detection Classes**: Real-time detection of faculty overlaps, student group clashes, room overlaps, capacity violations, room-type mismatches, faculty leave conflicts, and room maintenance conflicts.
+- **Deterministic Risk Scoring**: Categorised as **Low**, **Medium**, **High**, or **Critical**.
+- **Root Cause & Alternative Recommendations**: Explains the exact reason behind every detected conflict and proposes concrete clash-free alternative venues and time slots.
+
+### 3. Intelligent Rescheduling (`/disruptions`)
+- **Disruption Recovery**: Handles faculty leave and emergency room maintenance with a warm-start CP-SAT solver.
+- **Minimal Displacement**: Constrained with displacement penalties ($2000 \times \text{moved\_sessions}$) guaranteeing $\le 5$ moved sessions with 0 hard clashes.
+- **Side-by-Side Diff View**: Visualises before-and-after timetable comparison with highlighted changes.
+- **Mandatory Admin Sign-Off**: Requires authorized Dean/Admin approval before committing or publishing schedule alterations.
+
+### 4. AI Campus Copilot (`/copilot`)
+- **Bilingual Natural-Language Intake**: Accepts user queries in **English** and **Hinglish** (e.g. *"Spectra fest ke liye Room 01 chahiye Wednesday P10-P11 100 students"*).
+- **Fact-Grounded Querying**: Answers questions on room allocations, teacher schedules, lab availability, and campus facilities.
+- **Zero-Hallucination Boundary**: All scheduling and booking suggestions must pass pure-Python deterministic validation (`validator.py`). An LLM is **never allowed** to verify correctness or write directly to the database.
+
+### 5. Smart Venue Recommendations (`/events`, `/bookings`)
+- **Multi-Factor Matching**: Recommends optimal venues based on attendance size, room type, feature requirements, wheelchair accessibility, and zero-clash timetable windows.
+- **Capacity Tightness Ranking**: Ranks venues by smallest sufficient capacity to eliminate empty seat waste.
+
+### 6. Smart Maintenance Management (`/maintenance`)
+- **Defect Reporting**: Reports infrastructure issues across HVAC, Electrical, AV / Projector, Structural, and Plumbing.
+- **Automated Scheduling Sync**: When room closure is required, **automatically registers `RoomUnavailability` in the database**, blocking the venue in the scheduler; upon repair completion, automatically restores the room.
+
+### 7. Emergency Campus Management (`/emergency`)
+- **Lockdown Protocol**: Declares whole-building or room-specific emergency closures (weather alerts, power cuts, hazardous repairs).
+- **Impact Analysis**: Identifies all affected classes, student cohorts, and faculty members.
+- **Automated Contingency Relocation**: Generates safe alternative placements in unaffected venues of matching capacity.
+- **Strict Approval Gate**: Requires authorized Dean/Admin sign-off before committing contingency schedules to the live timetable.
+
+### 8. Additional Ecosystem Capabilities
+- **Smart Campus Navigation (`/navigation`)**: Interactive vector SVG 2D campus map, 4-floor switcher, wheelchair-accessible route generator.
+- **Smart Classroom Check-In (`/checkin`)**: QR code attendance simulator, real-time headcount vs capacity tracking, 15-minute grace-period monitor, and authorized unused room release.
+- **Academic Calendar (`/calendar`)**: Unified multi-source calendar (classes, midsem exams, club events, holidays) with departmental filters and clash warnings.
+- **Lab & Equipment Management (`/equipment`)**: Apparatus catalog (NVIDIA DGX A100 AI rigs, 1GHz oscilloscopes, 3D printers, CNCs) with timetable clash prevention.
+- **Green Campus Analytics (`/green`)**: Hourly power draw modeling ($0.035\text{ kW/seat}$ HVAC, $0.008\text{ kW/seat}$ lights), empty classroom waste calculation, carbon emissions ($0.72\text{ kg CO}_2\text{/kWh}$), and automated eco-directives.
+- **Campus Command Centre (`/command`)**: Executive console providing live occupancy rate, active conflict summary, pending approvals queue, and emergency alert ticker.
+- **Explainable Decisions Assistant (`/explain`)**: 5-pillar mathematical and constraint proofs for why any room/slot was chosen or rejected.
 
 ---
 
-## 🔑 Demo Accounts
+## 👥 Demo Accounts (Pre-Seeded)
 
-The system comes pre-seeded with 4 role-based demo accounts:
+The platform includes 4 pre-seeded role accounts accessible via the 1-click role switcher in the UI:
 
-| Role | Email | Password | Access & Capabilities |
-| :--- | :--- | :--- | :--- |
-| **Admin (Dean's Office)** | `admin@cit.edu` | `Admin@123` | Full control: generate timetables, upload dataset, reset demo data, approve timetable changes, view audit logs. |
-| **Department Coordinator** | `coordinator@cit.edu` | `Coord@123` | Request session changes for department, book departmental venues, approve lab bookings. |
-| **Faculty** | `faculty@cit.edu` | `Faculty@123` | View personal timetable, mark unavailability, submit rescheduling requests. |
-| **Club Representative** | `club@cit.edu` | `Club@123` | Submit & cancel venue booking requests for tech fest (Spectra '27) & club activities. |
-
----
-
-## 📋 Hard Constraints Enforced (Zero Tolerance)
-
-All schedules and bookings are validated strictly by `backend/validator.py`:
-1. **No Faculty Clash**: A faculty member cannot be in two places simultaneously.
-2. **No Student Group Clash**: A student group cannot attend two classes simultaneously (combined lectures count for all enrolled groups; sessions in the same elective basket slot run concurrently without mutual clash).
-3. **No Room Clash**: A room cannot hold two sessions or bookings concurrently.
-4. **Room Capacity**: Session size $\le$ room capacity. **Exam room capacity is halved** ($\lfloor \text{capacity}/2 \rfloor$).
-5. **Room Type Matching**: Lab sessions only scheduled in matching lab facilities (`lab_cs`, `lab_elec`, `lab_phy`, `workshop`, `lab_civil`).
-6. **Faculty Unavailability**: Scheduled sessions strictly respect faculty unavailability windows.
-7. **Room Unavailability**: Scheduled sessions strictly respect room maintenance windows (e.g., LH-4 Thursday ceiling repair).
-8. **Lunch Break**: No classes can cross lunch (13:00–14:00, between P5 and P6).
-9. **3-Hour Lab Restriction**: 3-hour labs only allowed in `P2–P4` (09:00–12:00) or `P6–P8` (14:00–17:00).
-10. **Accessibility Compliance**: Sessions requiring accessibility (e.g. ME-2 or Dr. Abhishek Rout) must be assigned wheelchair-accessible rooms.
-11. **Elective Basket Alignment**: All elective sessions for the same basket (e.g. `OEB-1`, `OEB-2`, `OEB-3`) run at the exact same day and period.
-12. **Faculty Daily Teaching Cap**: Maximum 4 teaching hours per faculty per day.
-13. **Fixed Slot Integrity**: Sessions with predefined fixed slots remain locked to those slots.
-14. **Booking Integrity**: Approved venue bookings cannot overlap with academic classes or other bookings in the same room.
+| Role | Email | Password | Permissions |
+|---|---|---|---|
+| **Dean's Office (Admin)** | `admin@cit.edu` | `Admin@123` | Full access: generate timetable, approve disruptions, lock down buildings, reset data, upload datasets. |
+| **Dept Coordinator (CSE)** | `coordinator@cit.edu` | `Coord@123` | Approve department bookings & events, move classes with validator check, view audit logs. |
+| **Dr. Rohit Sahoo (Faculty)** | `faculty@cit.edu` | `Faculty@123` | Request guest lectures, view teaching workload, reserve lab apparatus, QR check-in. |
+| **Spectra Tech Fest (Club Rep)**| `club@cit.edu` | `Club@123` | Request club events, propose hackathons, view venue recommendations. |
 
 ---
 
-## 🛠️ Setup & Running Locally
+## 🛠️ Installation & Setup Guide
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ (tested with v22 LTS)
+- MongoDB (Optional – embedded fallback activates automatically if MongoDB is offline)
 
 ### 1. Backend Setup
 ```powershell
+# Navigate to backend directory
 cd backend
+
+# Create and activate virtual environment
 python -m venv venv
-venv\Scripts\activate
+.\venv\Scripts\Activate.ps1   # Windows PowerShell
+# source venv/bin/activate    # Linux / macOS
+
+# Install dependencies
 pip install -r requirements.txt
-python -m app.loader
+
+# Start FastAPI server on port 8000
 uvicorn app.main:app --reload --port 8000
 ```
-API Documentation will be live at: `http://localhost:8000/docs`
+Backend API will be accessible at: `http://localhost:8000`  
+Interactive Swagger API documentation: `http://localhost:8000/docs`
 
 ### 2. Frontend Setup
 ```powershell
+# Navigate to frontend directory
 cd frontend
+
+# Install npm dependencies
 npm install
+
+# Start Next.js development server
 npm run dev
 ```
-Open `http://localhost:3000` in your browser.
+Frontend will be accessible at: `http://localhost:3000`
+
+### 3. Running with MongoDB
+By default, the platform connects to `mongodb://localhost:27017/cit_smart_campus`. If a local MongoDB instance is running, it connects automatically. If MongoDB is not installed, the platform automatically uses the persistent JSON datastore at `data/mongo_fallback.json` with 100% feature availability.
 
 ---
 
-## ⚡ Generating Schedule Exports & Official Validation
+## 🧪 Testing & Verification
 
-To run the complete end-to-end pipeline (data ingestion $\rightarrow$ CP-SAT timetable generation $\rightarrow$ midsem exam scheduling $\rightarrow$ Spectra venue booking resolution $\rightarrow$ sample disruption rescheduling $\rightarrow$ official validation) without any hand editing:
+### Run Full Pytest Suite (91 Tests)
+```powershell
+pytest backend/tests/ -v
+```
+All **91 tests pass with 100% green status**, covering:
+- CP-SAT timetable generation (189 sessions, 0 hard violations)
+- Midsem exam solver (41 exams, halved capacity)
+- Rescheduling minimal moves benchmark ($\le 5$ moves)
+- 7 Conflict monitor classes & predictive risk ratings
+- 5-Pillar explainable scheduling proofs
+- 20 Tricky NLP prompt safety and anti-bypass tests
+- 11 Smart campus ecosystem module integration tests
 
+### Run Official Validator
 ```powershell
 python scripts/generate_exports.py
+python validator.py --schedule exports/schedule.json
+python validator.py --schedule exports/schedule_after.json
 ```
+Both outputs verify **0 hard violations**, clean booking priority order, and optimal soft penalties.
 
-### Official Python Validator CLI
-You can run the official pure-Python validator independently on any generated file:
-
+### TypeScript & Static Export Compilation
 ```powershell
-# Validate base schedule (189 sessions, 41 exams, 25 bookings)
-python validator.py exports/schedule.json data/cit_public.json
-
-# Validate disrupted schedule (with minimal moves <= 5)
-python validator.py exports/schedule_after.json data/cit_public.json data/sample_disruption.json
+cd frontend
+npx tsc --noEmit
+npm run build
 ```
-
-Validator Output:
-```
-============================================================
-   CIT OFFICIAL TIMETABLE & VENUE VALIDATOR (PURE PYTHON)   
-============================================================
-Target File:      exports/schedule.json
-Schedule Valid:   True
-Hard Violations:  0
-Soft Penalty:     1300
-Booking Score:    136
-============================================================
-```
+Type checks report **0 errors** and Next.js builds **20/20 static pages cleanly**.
 
 ---
 
-## 🧪 Running Automated Tests
+## 📚 Complete Documentation Suite
 
-Run the complete backend test suite (55 test cases across 7 test modules):
-```powershell
-$env:PYTHONPATH="."
-pytest backend/tests -v
-```
-All 55 tests pass 100%:
-- `test_auth.py`: 6 test cases (JWT login for all 4 roles, invalid password rejection, RBAC enforcement).
-- `test_loader.py`: 3 test cases (database loading counts, admin dataset upload, admin demo reset).
-- `test_validator.py`: 16 test cases (all 13 hard constraints, elective basket synchronization, soft penalty metrics).
-- `test_solver.py`: 3 test cases (189 sessions + 41 midsem exams placement, exports/schedule.json verification, manual assignment clash rejection).
-- `test_booking_engine.py`: 4 test cases (priority conflict resolution, quota caps, self-approval prevention, batch evaluation).
-- `test_rescheduler.py`: 2 test cases (minimal moves <= 5 on sample disruption, exports/schedule_after.json generation).
-- `test_nlp_safety.py`: 21 test cases (20 tricky English & Hinglish prompts, prompt injection neutralization, anti-bypass role enforcement).
+For comprehensive technical documentation, refer to:
+- [`PROJECT_DOCUMENTATION.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/PROJECT_DOCUMENTATION.md) – Detailed project explanation, problem statement, optimization formulation, and feature walk-through.
+- [`SYSTEM_ARCHITECTURE.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/SYSTEM_ARCHITECTURE.md) – Architectural diagrams, dual-datastore design, CP-SAT solver internals, and security boundary.
+- [`API_DOCUMENTATION.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/API_DOCUMENTATION.md) – Complete reference of all 19 backend routers, request/response schemas, and status codes.
+- [`DATABASE_SCHEMA.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/DATABASE_SCHEMA.md) – Relational SQLite tables, MongoDB collections, entity relationships, and indexes.
+- [`INSTALLATION_GUIDE.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/INSTALLATION_GUIDE.md) – Step-by-step local, Docker, and cloud deployment instructions.
+- [`AI_USAGE.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/AI_USAGE.md) – AI usage declaration, supported LLM providers, zero-hallucination validation boundary, and prompt execution logs.
+- [`THIRD_PARTY.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/THIRD_PARTY.md) – Full inventory of backend and frontend libraries, versions, and licenses.
+- [`TESTING.md`](file:///c:/Users/KANCHAN%20SHAW/Antigravity/TESTING.md) – Test plan, test cases, automated test commands, validation results, and edge case coverage.
 
 ---
 
-## ☁️ Production Cloud Deployment
-
-### 1. Render Blueprint (Recommended)
-This repository includes a pre-configured `render.yaml` blueprint defining:
-- **Backend API**: Python 3.10 with Uvicorn ASGI server and a persistent 1 GB SQLite disk mount (`/data/cit_schedule.db`).
-- **Frontend UI**: Node 20 Next.js 14 production service.
-
-To deploy:
-1. Connect this repository to [Render.com](https://render.com).
-2. Choose **New > Blueprint** and select the repository.
-3. Render automatically provisions both services with zero configuration.
-
-### 2. Docker Deployment
-A standalone `Dockerfile` is provided for containerized cloud hosts (AWS ECS, Google Cloud Run, Railway, DigitalOcean):
-```powershell
-# Build container image
-docker build -t cit-scheduling-api .
-
-# Run container on port 8000
-docker run -p 8000:8000 -e JWT_SECRET="your-production-secret" cit-scheduling-api
-```
-
-### 3. Vercel Frontend Deployment
-1. Import the `/frontend` directory to [Vercel](https://vercel.com).
-2. Set the Environment Variable:
-   - `NEXT_PUBLIC_API_URL`: `https://your-backend-api-url.onrender.com`
-3. Click Deploy.
-
-### 4. Cold-Start Prevention & Health Checks
-Free-tier cloud hosts (e.g., Render free web service) sleep after 15 minutes of inactivity.
-- **Healthcheck URLs**: `GET /health` and `GET /api/health` return HTTP 200:
-  ```json
-  {"status": "healthy", "service": "cit-scheduling-backend", "institute": "Chilika Institute of Technology"}
-  ```
-- **Keep-Alive**: Set up a free 10-minute ping using [UptimeRobot](https://uptimerobot.com) or GitHub Actions cron to ping `https://<backend-url>/health` to eliminate cold-start delays during evaluation.
-
----
-
-## 📁 Generated Exports
-The platform generates and exports valid schedules conforming to the official competition specification:
-- `exports/schedule.json`: Contains 189 weekly sessions + 41 midsem exams with **0 hard violations**.
-- `exports/schedule_after.json`: Generated upon disruption rescheduling with **minimal moves ($\le 5$)** and **0 hard violations**.
-
----
-
-## ⚠️ Known Limitations & Design Decisions
-- The academic timetable covers recurring weekly sessions across Mon–Fri (P1–P9) and evening event slots (P10–P13).
-- SQLite is utilized for self-contained, reproducible, zero-setup local execution. For multi-datacenter deployments, PostgreSQL with row-level locks is recommended.
-- Visiting faculty (Prof. Vikram Rao, F08) teaches 3 lectures of CS204 and is on campus exclusively on Tuesday and Thursday; the course daily repeat is minimized via soft penalty objective (+10) to permit clash-free feasibility.
-
-
+## 📄 License
+This project is developed for the Chilika Institute of Technology (CIT) Campus Scheduling Challenge. All domain logic, constraint models, solvers, and UI components are original implementations.
