@@ -1,0 +1,35 @@
+{
+  "disruption_id": "SPECTRA-DISRUPTION-01",
+  "description": "Mid-semester disruption: Dr. Ananya Mishra on leave Thursday, CR-101 closed Tuesday morning, and added Remedial C Programming tutorial.",
+  "faculty_leaves": [
+    {
+      "faculty_id": "F01",
+      "day": "THU",
+      "periods": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "reason": "Emergency medical leave"
+    }
+  ],
+  "room_closures": [
+    {
+      "room_id": "CR-101",
+      "day": "TUE",
+      "periods": [1, 2, 3, 4, 5],
+      "reason": "Air conditioner maintenance"
+    }
+  ],
+  "new_sessions": [
+    {
+      "id": "CS101-REMEDIAL",
+      "course_id": "CS101",
+      "kind": "tutorial",
+      "groups": ["Y1-A"],
+      "faculty_id": "F03",
+      "size": 90,
+      "duration": 1,
+      "room_types": ["classroom", "lecture_hall"],
+      "needs_accessible": false,
+      "basket_slot": null,
+      "fixed_slot": null
+    }
+  ]
+}

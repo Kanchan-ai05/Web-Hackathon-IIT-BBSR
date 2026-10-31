@@ -202,6 +202,8 @@ def load_cit_dataset(db: Session, data: Dict[str, Any], reseed_users: bool = Tru
         db.add(bk)
         bookings_count += 1
 
+    db.flush()
+
     # 9. Cancellations
     cancellations_count = 0
     for cn in data.get("cancellations", []):

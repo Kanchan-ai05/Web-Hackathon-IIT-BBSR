@@ -1,14 +1,16 @@
 import json
 from datetime import datetime
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import BookingRequest, User, AuditLog, Room
+from ..models import BookingRequest, User, AuditLog, Room, TimetableSlot
 from ..schemas import ManualBookingCreate
 from ..auth import get_current_user, require_role
 from .timetable_router import _build_dataset_dict
 from ..validator import validate_schedule
+from backend.booking_engine import CITBookingEngine
+from backend.nlp_service import parse_booking_prompt, explain_decision
 
 router = APIRouter(prefix="/api/bookings", tags=["Venue Bookings"])
 
@@ -23,7 +25,6 @@ def list_bookings(
     if status_filter:
         query = query.filter(BookingRequest.status == status_filter)
     
-    # If club rep, only view own club requests or general list
     bookings = query.order_by(BookingRequest.submitted_at.desc()).all()
     return [
         {
@@ -64,11 +65,9 @@ def create_manual_booking(
     """
     dataset = _build_dataset_dict(db)
 
-    # 1. Generate new ID
     next_num = db.query(BookingRequest).count() + 1
     new_id = f"BR-M{next_num:03d}"
 
-    # 2. Build booking allocation to test through validator
     test_booking_allocation = [{
         "booking_id": new_id,
         "day": booking_in.day,
@@ -77,7 +76,6 @@ def create_manual_booking(
         "status": "approved"
     }]
 
-    # Also build existing approved bookings
     existing_approved = [
         {
             "booking_id": b.id,
@@ -90,25 +88,27 @@ def create_manual_booking(
         if b.assigned_day and b.assigned_room
     ]
 
-    # Combine
     all_tested_bookings = existing_approved + test_booking_allocation
 
-    # Inject simulated booking into dataset for validator check
     dataset["booking_requests"].append({
         "id": new_id,
         "attendance": booking_in.attendance,
-        "room_types": [],  # Will validate against assigned room type if specified
+        "room_types": [],
         "needs": booking_in.needs or [],
         "mandatory_for_groups": booking_in.mandatory_for_groups or []
     })
 
+    current_slots = [
+        {"session_id": s.session_id, "day": s.day, "start_period": s.start_period, "room_id": s.room_id}
+        for s in db.query(TimetableSlot).all()
+    ]
+
     validation_result = validate_schedule(
         dataset=dataset,
-        timetable_slots=[],  # Can include current timetable if loaded
+        timetable_slots=current_slots,
         booking_allocations=all_tested_bookings
     )
 
-    # Filter violations specific to this booking
     booking_violations = [
         v for v in validation_result["violations"]
         if new_id in v["entities"]
@@ -123,7 +123,6 @@ def create_manual_booking(
             }
         )
 
-    # If valid, persist to database
     now_iso = datetime.now().isoformat()
     new_booking = BookingRequest(
         id=new_id,
@@ -148,7 +147,6 @@ def create_manual_booking(
     )
     db.add(new_booking)
 
-    # Audit log
     audit = AuditLog(
         user_email=current_user.email,
         role=current_user.role,
@@ -172,3 +170,142 @@ def create_manual_booking(
         "day": booking_in.day,
         "periods": booking_in.periods
     }
+
+@router.post("/batch-process")
+def process_all_venue_requests(
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Processes all venue booking requests in dataset using priority rules and plain code.
+    
+    No LLM. Returns approval, rejection, or alternative for every request with reasons.
+    """
+    dataset = _build_dataset_dict(db)
+
+    timetable_slots = [
+        {"session_id": s.session_id, "day": s.day, "start_period": s.start_period, "room_id": s.room_id}
+        for s in db.query(TimetableSlot).all()
+    ]
+
+    engine = CITBookingEngine(dataset, timetable_slots)
+    results = []
+
+    from ..models import Cancellation
+    cancelled_ids = {c.request_id for c in db.query(Cancellation).all()}
+
+    requests = db.query(BookingRequest).order_by(BookingRequest.submitted_at).all()
+    for req in requests:
+        if req.status == "cancelled" or req.id in cancelled_ids:
+            results.append({
+                "request_id": req.id,
+                "decision": "cancelled",
+                "reason": req.rejection_reason or "Cancelled by requester",
+                "assigned_slot": None,
+                "alternative": None
+            })
+            continue
+
+        req_dict = {
+            "id": req.id,
+            "submitted_at": req.submitted_at,
+            "requester": req.requester,
+            "role": req.role,
+            "department": req.department,
+            "requested_category": req.requested_category,
+            "title": req.title,
+            "attendance": req.attendance,
+            "duration_periods": req.duration_periods,
+            "windows": req.windows,
+            "room_types": req.room_types,
+            "needs": req.needs,
+            "requested_room": req.requested_room,
+            "mandatory_for_groups": req.mandatory_for_groups,
+            "series_id": req.series_id
+        }
+
+        eval_res = engine.process_request(req_dict)
+        results.append(eval_res)
+
+        # Update database record
+        req.status = eval_res["decision"]
+        if eval_res["decision"] == "approve" and eval_res["assigned_slot"]:
+            req.assigned_day = eval_res["assigned_slot"]["day"]
+            req.assigned_periods_json = json.dumps(eval_res["assigned_slot"]["periods"])
+            req.assigned_room = eval_res["assigned_slot"]["room_id"]
+            req.rejection_reason = eval_res["reason"]
+        else:
+            req.rejection_reason = eval_res["reason"]
+
+    db.commit()
+
+    return {
+        "message": f"Processed {len(results)} venue booking requests",
+        "decisions": results
+    }
+
+@router.post("/nlp-parse")
+def nlp_parse_booking_request(
+    text: str = Body(..., embed=True),
+    current_user: User = Depends(get_current_user)
+):
+    """Natural-language intake: parses English/Hinglish text into structured booking JSON.
+    
+    Locks role and event category to authenticated user account (anti-bypass).
+    """
+    return parse_booking_prompt(
+        text=text,
+        user_role=current_user.role,
+        user_department=current_user.department
+    )
+
+@router.post("/explain")
+def explain_scheduling_decision(
+    decision: str = Body(...),
+    rule: Optional[str] = Body(None),
+    entities: Optional[List[str]] = Body(None),
+    current_user: User = Depends(get_current_user)
+):
+    """Explains a scheduling or booking decision using factual deterministic templates."""
+    explanation = explain_decision(decision=decision, rule=rule, entities=entities)
+    return {
+        "decision": decision,
+        "rule": rule,
+        "entities": entities,
+        "explanation": explanation
+    }
+
+@router.post("/{booking_id}/cancel")
+def cancel_booking_request(
+    booking_id: str,
+    note: str = Body("Cancelled by user", embed=True),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Cancels a booking request and immediately frees its venue slot."""
+    booking = db.query(BookingRequest).filter(BookingRequest.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking request not found")
+
+    # Check permission: admin or original requester
+    if current_user.role != "admin" and current_user.role != booking.role:
+        raise HTTPException(status_code=403, detail="Permission denied to cancel this request")
+
+    # Release slot
+    booking.status = "cancelled"
+    booking.rejection_reason = f"Cancelled: {note}"
+    booking.assigned_day = None
+    booking.assigned_periods_json = "[]"
+    booking.assigned_room = None
+
+    audit = AuditLog(
+        user_email=current_user.email,
+        role=current_user.role,
+        action="BOOKING_CANCELLED",
+        target_type="booking",
+        target_id=booking_id,
+        details_json=json.dumps({"note": note})
+    )
+    db.add(audit)
+    db.commit()
+
+    return {"message": f"Booking {booking_id} cancelled and slot released.", "status": "cancelled"}

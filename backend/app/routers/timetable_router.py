@@ -1,6 +1,7 @@
 import json
+import os
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import (
@@ -12,11 +13,16 @@ from ..models import (
     TimetableSlot,
     CalendarSetting,
     BookingRequest,
-    Exam
+    Exam,
+    AuditLog,
+    User
 )
 from ..schemas import ScheduleValidationRequest, ValidationResult
 from ..validator import validate_schedule
-from ..auth import get_current_user
+from backend.solver import generate_weekly_timetable
+from backend.exam_scheduler import schedule_midsem_exams
+from backend.rescheduler import CITRescheduler
+from ..auth import get_current_user, require_role
 
 router = APIRouter(prefix="/api/timetable", tags=["Timetable"])
 
@@ -167,7 +173,8 @@ def get_timetable_metadata(db: Session = Depends(get_db)):
         "faculty": [{"id": f["id"], "name": f["name"], "department": f["department"]} for f in dataset["faculty"]],
         "student_groups": dataset["student_groups"],
         "courses": dataset["courses"],
-        "total_sessions": len(dataset["sessions"])
+        "total_sessions": len(dataset["sessions"]),
+        "total_exams": len(dataset["exams"])
     }
 
 @router.get("")
@@ -181,7 +188,6 @@ def get_current_timetable(
     query = db.query(TimetableSlot)
     slots = query.all()
 
-    # Join with session info
     session_map = {s.id: s for s in db.query(SessionModel).all()}
     course_map = {c.id: c for c in db.query(Course).all()}
     faculty_map = {f.id: f for f in db.query(Faculty).all()}
@@ -221,6 +227,289 @@ def get_current_timetable(
         })
 
     return results
+
+@router.post("/generate")
+def generate_full_schedule(
+    timeout_seconds: float = 60.0,
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to generate complete timetable and exam schedule using CP-SAT.
+    
+    Validates output and exports exports/schedule.json.
+    """
+    dataset = _build_dataset_dict(db)
+
+    # 1. Solve weekly timetable (189 sessions)
+    timetable_slots = generate_weekly_timetable(dataset, timeout_seconds=timeout_seconds)
+    if not timetable_slots:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CP-SAT solver could not find a clash-free schedule satisfying all hard constraints."
+        )
+
+    # 2. Solve midsem exams (41 exams)
+    exam_allocations = schedule_midsem_exams(dataset, timeout_seconds=30.0)
+    if not exam_allocations:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CP-SAT solver could not find a valid exam schedule."
+        )
+
+    # 3. Validate with pure Python validator
+    validation = validate_schedule(
+        dataset=dataset,
+        timetable_slots=timetable_slots,
+        exam_allocations=exam_allocations
+    )
+
+    if not validation["valid"]:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "message": "Generated schedule has hard constraint violations",
+                "violations": validation["violations"]
+            }
+        )
+
+    # 4. Save timetable slots to database
+    db.query(TimetableSlot).delete()
+    for s in timetable_slots:
+        ts = TimetableSlot(
+            session_id=s["session_id"],
+            day=s["day"],
+            start_period=s["start_period"],
+            room_id=s["room_id"]
+        )
+        db.add(ts)
+
+    # Update exams in DB
+    for ex in exam_allocations:
+        exam_rec = db.query(Exam).filter(Exam.id == ex["exam_id"]).first()
+        if exam_rec:
+            exam_rec.scheduled_day = ex["day"]
+            exam_rec.scheduled_session = ex["session"]
+            exam_rec.scheduled_rooms_json = json.dumps(ex["rooms"])
+
+    # 5. Export schedule to exports/schedule.json
+    exports_dir = os.path.join(os.getcwd(), "exports")
+    os.makedirs(exports_dir, exist_ok=True)
+    export_path = os.path.join(exports_dir, "schedule.json")
+
+    export_payload = {
+        "dataset_id": dataset.get("dataset_id", "cit-public-v1"),
+        "timetable": timetable_slots,
+        "exams": exam_allocations,
+        "validation": {
+            "valid": True,
+            "hard_violations_count": 0,
+            "soft_penalty": validation["soft_penalty"],
+            "soft_breakdown": validation["soft_breakdown"]
+        }
+    }
+
+    with open(export_path, "w", encoding="utf-8") as f:
+        json.dump(export_payload, f, indent=2)
+
+    # 6. Audit log
+    audit = AuditLog(
+        user_email=current_user.email,
+        role=current_user.role,
+        action="SCHEDULE_GENERATED",
+        target_type="timetable",
+        target_id="schedule.json",
+        details_json=json.dumps({
+            "sessions_count": len(timetable_slots),
+            "exams_count": len(exam_allocations),
+            "soft_penalty": validation["soft_penalty"]
+        })
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "message": "Full clash-free schedule generated and validated successfully",
+        "sessions_placed": len(timetable_slots),
+        "exams_placed": len(exam_allocations),
+        "soft_penalty": validation["soft_penalty"],
+        "soft_breakdown": validation["soft_breakdown"],
+        "export_file": "exports/schedule.json"
+    }
+
+@router.post("/manual-schedule")
+def manual_schedule_session(
+    session_id: str = Body(...),
+    day: str = Body(...),
+    start_period: int = Body(...),
+    room_id: str = Body(...),
+    current_user: User = Depends(require_role(["admin", "department_coordinator"])),
+    db: Session = Depends(get_db)
+):
+    """Assigns or moves a session manually for authorized roles.
+    
+    Strictly validated by validator.py before any database write.
+    """
+    dataset = _build_dataset_dict(db)
+
+    # Fetch existing timetable
+    existing_slots = [
+        {"session_id": s.session_id, "day": s.day, "start_period": s.start_period, "room_id": s.room_id}
+        for s in db.query(TimetableSlot).all()
+        if s.session_id != session_id
+    ]
+
+    # New proposed slot
+    proposed_slot = {
+        "session_id": session_id,
+        "day": day,
+        "start_period": start_period,
+        "room_id": room_id
+    }
+    candidate_timetable = existing_slots + [proposed_slot]
+
+    # Validate against pure Python validator
+    validation = validate_schedule(dataset, timetable_slots=candidate_timetable)
+    
+    # Check violations related to this change
+    clashes = [
+        v for v in validation["violations"]
+        if session_id in v["entities"] or (v["slot"].get("room") == room_id and v["slot"].get("day") == day)
+    ]
+
+    if clashes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "HARD_CONSTRAINT_VIOLATION",
+                "message": f"Manual schedule blocked by rule: {clashes[0]['rule']}",
+                "violations": clashes
+            }
+        )
+
+    # If valid, apply to database
+    slot_rec = db.query(TimetableSlot).filter(TimetableSlot.session_id == session_id).first()
+    if slot_rec:
+        slot_rec.day = day
+        slot_rec.start_period = start_period
+        slot_rec.room_id = room_id
+    else:
+        slot_rec = TimetableSlot(
+            session_id=session_id,
+            day=day,
+            start_period=start_period,
+            room_id=room_id
+        )
+        db.add(slot_rec)
+
+    # Audit log
+    audit = AuditLog(
+        user_email=current_user.email,
+        role=current_user.role,
+        action="MANUAL_SESSION_SCHEDULED",
+        target_type="session",
+        target_id=session_id,
+        details_json=json.dumps({"day": day, "start_period": start_period, "room_id": room_id})
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "message": f"Session {session_id} successfully scheduled at {day} P{start_period} in {room_id}",
+        "slot": proposed_slot
+    }
+
+@router.post("/disrupt")
+def preview_disruption_reschedule(
+    disruption_spec: Optional[Dict[str, Any]] = Body(None),
+    current_user: User = Depends(require_role(["admin", "department_coordinator", "faculty"])),
+    db: Session = Depends(get_db)
+):
+    """Proposes minimal-displacement schedule changes upon disruption.
+    
+    Saves export to exports/schedule_after.json upon success.
+    """
+    dataset = _build_dataset_dict(db)
+
+    # Load sample disruption from file if not provided
+    if not disruption_spec:
+        sample_path = os.path.join(os.getcwd(), "data", "sample_disruption.json")
+        if os.path.exists(sample_path):
+            with open(sample_path, "r", encoding="utf-8") as f:
+                disruption_spec = json.load(f)
+        else:
+            raise HTTPException(status_code=400, detail="No disruption spec provided and sample_disruption.json not found")
+
+    # Fetch current timetable
+    current_slots = [
+        {"session_id": s.session_id, "day": s.day, "start_period": s.start_period, "room_id": s.room_id}
+        for s in db.query(TimetableSlot).all()
+    ]
+    if not current_slots:
+        # Generate initial timetable if not present
+        current_slots = generate_weekly_timetable(dataset, timeout_seconds=30.0)
+
+    rescheduler = CITRescheduler(dataset, current_slots)
+    result = rescheduler.reschedule(disruption_spec, timeout_seconds=45.0)
+
+    if result["status"] == "pending_approval" and result["new_timetable"]:
+        # Export to exports/schedule_after.json
+        exports_dir = os.path.join(os.getcwd(), "exports")
+        os.makedirs(exports_dir, exist_ok=True)
+        export_path = os.path.join(exports_dir, "schedule_after.json")
+
+        with open(export_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "disruption_id": disruption_spec.get("disruption_id"),
+                "moved_count": result["moved_count"],
+                "diff": result["diff"],
+                "timetable": result["new_timetable"],
+                "soft_penalty": result["soft_penalty"]
+            }, f, indent=2)
+
+    return result
+
+@router.post("/disrupt/apply")
+def apply_disruption_schedule(
+    disruption_id: str = Body(...),
+    new_timetable: List[Dict[str, Any]] = Body(...),
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to approve and apply pending disruption schedule."""
+    dataset = _build_dataset_dict(db)
+
+    # Validate before applying
+    val = validate_schedule(dataset, timetable_slots=new_timetable)
+    if not val["valid"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"message": "Cannot apply schedule with hard violations", "violations": val["violations"]}
+        )
+
+    # Update database
+    db.query(TimetableSlot).delete()
+    for s in new_timetable:
+        ts = TimetableSlot(
+            session_id=s["session_id"],
+            day=s["day"],
+            start_period=s["start_period"],
+            room_id=s["room_id"]
+        )
+        db.add(ts)
+
+    # Audit log
+    audit = AuditLog(
+        user_email=current_user.email,
+        role=current_user.role,
+        action="DISRUPTION_SCHEDULE_APPLIED",
+        target_type="disruption",
+        target_id=disruption_id,
+        details_json=json.dumps({"sessions_count": len(new_timetable)})
+    )
+    db.add(audit)
+    db.commit()
+
+    return {"message": "Rescheduled timetable successfully applied by Admin."}
 
 @router.post("/validate", response_model=ValidationResult)
 def validate_proposed_schedule(
