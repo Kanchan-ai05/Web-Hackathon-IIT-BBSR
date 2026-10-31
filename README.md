@@ -4,6 +4,16 @@ A robust web platform built for **Chilika Institute of Technology (CIT)** that g
 
 ---
 
+## 🌐 Live Deployed Links
+
+- 🖥️ **Live Web Platform (GitHub Pages)**: [https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/](https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/)
+- ⚡ **Live Web Platform (Vercel)**: [https://web-hackathon-iit-bbsr.vercel.app](https://web-hackathon-iit-bbsr.vercel.app)
+- 🚀 **Live Backend API (Render)**: [https://cit-scheduling-api.onrender.com](https://cit-scheduling-api.onrender.com)
+- 📖 **Interactive Swagger API Docs**: [https://cit-scheduling-api.onrender.com/docs](https://cit-scheduling-api.onrender.com/docs)
+- 💻 **GitHub Repository**: [https://github.com/Kanchan-ai05/Web-Hackathon-IIT-BBSR](https://github.com/Kanchan-ai05/Web-Hackathon-IIT-BBSR)
+
+---
+
 ## 🏛️ System Architecture
 
 ```

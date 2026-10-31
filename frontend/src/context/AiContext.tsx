@@ -64,7 +64,9 @@ export function AiProvider({ children }: { children: React.ReactNode }) {
 
     setTestLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiUrl = (typeof window !== "undefined" && localStorage.getItem("cit_api_url")) 
+        || process.env.NEXT_PUBLIC_API_URL 
+        || ((typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") ? "https://cit-scheduling-api.onrender.com" : "http://localhost:8000");
       const res = await fetch(`${apiUrl}/api/ai/test-key`, {
         method: "POST",
         headers: {

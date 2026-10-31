@@ -15,3 +15,5 @@ __pycache__/
 .pytest_cache/
 venv/
 .next/
+out/
+frontend/out/

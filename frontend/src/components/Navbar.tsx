@@ -8,11 +8,12 @@ import { useAiSettings } from "../context/AiContext";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, quickLogin, logout, loading } = useAuth();
+  const { user, quickLogin, logout, loading, apiUrl, updateApiUrl } = useAuth();
   const { apiKey, provider, isConnected, modelName, testLoading, saveSettings, testConnection, clearSettings } = useAiSettings();
 
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [inputKey, setInputKey] = useState(apiKey);
+  const [inputApiUrl, setInputApiUrl] = useState(apiUrl);
   const [selectedProvider, setSelectedProvider] = useState<"gemini" | "openai">(provider);
   const [showKey, setShowKey] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error" | null; message: string }>({ type: null, message: "" });
@@ -26,6 +27,7 @@ export default function Navbar() {
 
   const handleOpenAiModal = () => {
     setInputKey(apiKey);
+    setInputApiUrl(apiUrl);
     setSelectedProvider(provider);
     setFeedback({ type: null, message: "" });
     setIsAiModalOpen(true);
@@ -42,6 +44,9 @@ export default function Navbar() {
   };
 
   const handleSaveAi = () => {
+    if (inputApiUrl && inputApiUrl.trim()) {
+      updateApiUrl(inputApiUrl.trim());
+    }
     saveSettings(inputKey, selectedProvider);
     setIsAiModalOpen(false);
   };
@@ -322,6 +327,47 @@ export default function Navbar() {
                     <span>{feedback.message}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Backend API Endpoint Switcher */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Backend API Server Endpoint
+                </label>
+                <div className="flex gap-2 mb-1.5">
+                  <input
+                    type="text"
+                    value={inputApiUrl}
+                    onChange={(e) => setInputApiUrl(e.target.value)}
+                    placeholder="https://cit-scheduling-api.onrender.com or http://localhost:8000"
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400">Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setInputApiUrl("https://cit-scheduling-api.onrender.com")}
+                    className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                      inputApiUrl.includes("render.com")
+                        ? "bg-sky-100 text-sky-800 border-sky-300 font-semibold"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    ☁️ Cloud (Render)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputApiUrl("http://localhost:8000")}
+                    className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                      inputApiUrl.includes("localhost") || inputApiUrl.includes("127.0.0.1")
+                        ? "bg-sky-100 text-sky-800 border-sky-300 font-semibold"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    💻 Localhost (8000)
+                  </button>
+                </div>
               </div>
             </div>
 

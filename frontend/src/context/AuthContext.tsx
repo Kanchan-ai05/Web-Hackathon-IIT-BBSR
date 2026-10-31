@@ -53,6 +53,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   apiUrl: string;
+  updateApiUrl: (url: string) => void;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   quickLogin: (role: string) => Promise<void>;
@@ -65,8 +66,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [apiUrl, setApiUrl] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cit_api_url");
+      if (stored) return stored;
+      if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+      if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+        return "https://cit-scheduling-api.onrender.com";
+      }
+    }
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  });
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const updateApiUrl = (newUrl: string) => {
+    const trimmed = (newUrl || "").trim().replace(/\/+$/, "");
+    setApiUrl(trimmed);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cit_api_url", trimmed);
+    }
+  };
 
   useEffect(() => {
     // Restore session from localStorage or auto-login as Admin
@@ -135,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         token,
         apiUrl,
+        updateApiUrl,
         loading,
         login,
         quickLogin,
