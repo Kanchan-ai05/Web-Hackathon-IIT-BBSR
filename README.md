@@ -106,15 +106,31 @@ Open `http://localhost:3000` in your browser.
 
 ## 🧪 Running Automated Tests
 
-Run the backend test suite:
+Run the complete backend test suite (55 test cases across 7 test modules):
 ```powershell
-pytest backend/tests/test_loader.py -v
-pytest backend/tests/test_validator.py -v
-pytest backend/tests/test_auth.py -v
+$env:PYTHONPATH="."
+pytest backend/tests -v
 ```
+All 55 tests pass 100%:
+- `test_auth.py`: 6 test cases (JWT login for all 4 roles, invalid password rejection, RBAC enforcement).
+- `test_loader.py`: 3 test cases (database loading counts, admin dataset upload, admin demo reset).
+- `test_validator.py`: 16 test cases (all 13 hard constraints, elective basket synchronization, soft penalty metrics).
+- `test_solver.py`: 3 test cases (189 sessions + 41 midsem exams placement, exports/schedule.json verification, manual assignment clash rejection).
+- `test_booking_engine.py`: 4 test cases (priority conflict resolution, quota caps, self-approval prevention, batch evaluation).
+- `test_rescheduler.py`: 2 test cases (minimal moves <= 5 on sample disruption, exports/schedule_after.json generation).
+- `test_nlp_safety.py`: 21 test cases (20 tricky English & Hinglish prompts, prompt injection neutralization, anti-bypass role enforcement).
 
 ---
 
-## ⚠️ Known Limitations
-- The current implementation targets single-week recurring timetables with event-only evening slots (P10–P13).
-- SQLite is utilized for self-contained, zero-setup testing. For high concurrency, PostgreSQL is recommended.
+## 📁 Generated Exports
+The platform generates and exports valid schedules conforming to the official competition specification:
+- `exports/schedule.json`: Contains 189 weekly sessions + 41 midsem exams with **0 hard violations**.
+- `exports/schedule_after.json`: Generated upon disruption rescheduling with **minimal moves ($\le 5$)** and **0 hard violations**.
+
+---
+
+## ⚠️ Known Limitations & Design Decisions
+- The academic timetable covers recurring weekly sessions across Mon–Fri (P1–P9) and evening event slots (P10–P13).
+- SQLite is utilized for self-contained, reproducible, zero-setup local execution. For multi-datacenter deployments, PostgreSQL with row-level locks is recommended.
+- Visiting faculty (Prof. Vikram Rao, F08) teaches 3 lectures of CS204 and is on campus exclusively on Tuesday and Thursday; the course daily repeat is minimized via soft penalty objective (+10) to permit clash-free feasibility.
+

@@ -1,62 +1,29 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
-const DEMO_ACCOUNTS = [
-  { role: "admin", name: "Dean's Office (Admin)", email: "admin@cit.edu", password: "Admin@123", desc: "Full control, dataset upload, demo reset" },
-  { role: "department_coordinator", name: "Dept Coordinator (CSE)", email: "coordinator@cit.edu", password: "Coord@123", desc: "Session changes, departmental bookings" },
-  { role: "faculty", name: "Dr. Rohit Sahoo (Faculty)", email: "faculty@cit.edu", password: "Faculty@123", desc: "Personal timetable, leaves, preferences" },
-  { role: "club", name: "Spectra Tech Fest (Club Rep)", email: "club@cit.edu", password: "Club@123", desc: "Venue requests, fest events" },
-];
+import Link from "next/link";
+import { useAuth, DEMO_ACCOUNTS } from "../context/AuthContext";
 
 export default function Home() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const { user, token, quickLogin, apiUrl, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadJson, setUploadJson] = useState<string>("");
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-  // Login handler
-  const handleQuickLogin = async (acc: typeof DEMO_ACCOUNTS[0]) => {
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-    try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: json_stringify_safe({ email: acc.email, password: acc.password }),
-      });
-      if (!res.ok) throw new Error("Login failed");
-      const data = await res.json();
-      setToken(data.access_token);
-      setCurrentUser(data);
-      setMessage(`Logged in as ${acc.name} (${acc.role})`);
-    } catch (err: any) {
-      setError(err.message || "Authentication error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  function json_stringify_safe(obj: any) {
-    return JSON.stringify(obj);
-  }
-
-  // Fetch stats
+  // Fetch stats & metadata
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/timetable/metadata`);
+      const res = await fetch(`${apiUrl}/api/timetable/metadata`);
       if (res.ok) {
         const data = await res.json();
         setStats(data);
       }
     } catch (e) {
-      // Backend not running on static render
+      // Backend may be offline during build
     }
   };
 
@@ -64,18 +31,56 @@ export default function Home() {
   const handleResetData = async () => {
     if (!token) return;
     setLoading(true);
+    setError(null);
+    setMessage(null);
     try {
-      const res = await fetch(`${API_URL}/api/admin/reset`, {
+      const res = await fetch(`${apiUrl}/api/admin/reset`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Reset failed");
-      setMessage("Demo data successfully reset to clean CIT public state!");
+      setMessage("✓ Demo data successfully restored to clean original CIT public state!");
       fetchStats();
       fetchAuditLogs();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to reset demo data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload replacement dataset
+  const handleUploadDataset = async () => {
+    if (!token || !uploadJson.trim()) return;
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      let parsed;
+      try {
+        parsed = JSON.parse(uploadJson);
+      } catch (e) {
+        throw new Error("Invalid JSON format. Please verify the syntax.");
+      }
+
+      const res = await fetch(`${apiUrl}/api/admin/dataset/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(parsed),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Upload failed");
+      setMessage(`✓ Replacement dataset '${data.dataset_id}' loaded successfully!`);
+      setShowUploadModal(false);
+      setUploadJson("");
+      fetchStats();
+      fetchAuditLogs();
+    } catch (err: any) {
+      setError(err.message || "Upload failed");
     } finally {
       setLoading(false);
     }
@@ -83,9 +88,9 @@ export default function Home() {
 
   // Fetch Audit Logs (Admin only)
   const fetchAuditLogs = async () => {
-    if (!token || currentUser?.role !== "admin") return;
+    if (!token || user?.role !== "admin") return;
     try {
-      const res = await fetch(`${API_URL}/api/admin/audit-logs`, {
+      const res = await fetch(`${apiUrl}/api/admin/audit-logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -97,176 +102,316 @@ export default function Home() {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
-    if (currentUser?.role === "admin") {
+    if (user?.role === "admin" && token) {
       fetchAuditLogs();
+    } else {
+      setAuditLogs([]);
     }
-  }, [currentUser]);
+  }, [user, token]);
 
   return (
-    <main className="min-h-screen p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <header className="border-b pb-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🏛️</span>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Chilika Institute of Technology (CIT)
-              </h1>
-              <p className="text-sm text-slate-600">
-                Campus Scheduling, Exam Timetables & Venue Management Platform
-              </p>
-            </div>
+    <main className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+      {/* Hero Banner */}
+      <section className="bg-gradient-to-r from-sky-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+        <div className="relative z-10 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-semibold mb-3 border border-sky-400/30">
+            <span>🛡️</span> Pure Python Validator & OR-Tools CP-SAT Timetable Engine
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            Chilika Institute of Technology (CIT)
+          </h1>
+          <p className="mt-2 text-slate-300 text-sm sm:text-base leading-relaxed">
+            Automated clash-free weekly scheduling, midsem exam planning, venue booking resolution, and
+            minimal-displacement disruption recovery.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/timetable"
+              className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2"
+            >
+              <span>📅</span> View & Generate Timetable
+            </Link>
+            <Link
+              href="/bookings"
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
+            >
+              <span>🎫</span> Venue Bookings & AI Intake
+            </Link>
+            <Link
+              href="/disruptions"
+              className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
+            >
+              <span>⚡</span> Disruption Rescheduler
+            </Link>
           </div>
         </div>
-
-        {currentUser ? (
-          <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
-            <div className="text-right">
-              <div className="text-xs font-semibold text-slate-800">{currentUser.name}</div>
-              <div className="text-xs font-mono uppercase text-sky-600">{currentUser.role}</div>
-            </div>
-            <button
-              onClick={() => {
-                setCurrentUser(null);
-                setToken(null);
-                setAuditLogs([]);
-              }}
-              className="text-xs text-red-600 hover:text-red-700 bg-red-50 px-2 py-1 rounded"
-            >
-              Sign out
-            </button>
-          </div>
-        ) : (
-          <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border">
-            Not authenticated (select a role below)
-          </div>
-        )}
-      </header>
+      </section>
 
       {/* Notifications */}
       {message && (
-        <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
-          ✓ {message}
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
+          <span>{message}</span>
+          <button onClick={() => setMessage(null)} className="text-emerald-600 font-bold ml-4">✕</button>
         </div>
       )}
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm">
-          ✕ {error}
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between">
+          <span>✕ {error}</span>
+          <button onClick={() => setError(null)} className="text-rose-600 font-bold ml-4">✕</button>
         </div>
       )}
 
-      {/* Role Selection Grid */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold text-slate-800 mb-3">
-          1-Click Demo Account Switcher
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 1-Click Role Switcher */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">
+              Demo Role Selector
+            </h2>
+            <p className="text-xs text-slate-500">
+              Instant login into any of the 4 institutional stakeholder roles
+            </p>
+          </div>
+          <div className="text-xs text-slate-500 font-mono">
+            Active: <span className="font-semibold text-sky-700 uppercase">{user?.role || "Guest"}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {DEMO_ACCOUNTS.map((acc) => {
-            const isActive = currentUser?.email === acc.email;
+            const isActive = user?.email === acc.email;
             return (
               <div
                 key={acc.email}
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
                   isActive
-                    ? "bg-sky-50 border-sky-400 shadow-md ring-2 ring-sky-300"
-                    : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                    ? "bg-sky-50/80 border-sky-400 shadow-sm ring-2 ring-sky-400"
+                    : "bg-white border-slate-200 hover:border-slate-300 shadow-xs"
                 }`}
               >
-                <div className="text-xs font-bold uppercase tracking-wider text-sky-700 mb-1">
-                  {acc.role.replace("_", " ")}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 bg-sky-100/60 px-2 py-0.5 rounded">
+                      {acc.role.replace("_", " ")}
+                    </span>
+                    {isActive && (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-bold text-slate-900 text-sm mt-2">{acc.name}</div>
+                  <div className="text-xs text-slate-500 mt-1">{acc.desc}</div>
                 </div>
-                <div className="font-semibold text-slate-900 text-sm">{acc.name}</div>
-                <div className="text-xs text-slate-500 mt-1 mb-3">{acc.desc}</div>
-                <button
-                  disabled={loading}
-                  onClick={() => handleQuickLogin(acc)}
-                  className={`w-full text-xs font-medium py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-sky-600 text-white"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-800"
-                  }`}
-                >
-                  {isActive ? "Active Account" : "Log in as this role"}
-                </button>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-slate-400">{acc.email}</span>
+                  <button
+                    disabled={authLoading}
+                    onClick={() => quickLogin(acc.role)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-sky-600 text-white"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-800"
+                    }`}
+                  >
+                    {isActive ? "Logged In" : "Switch"}
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* Core Dataset Summary */}
-      <section className="mb-8">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-lg font-semibold text-slate-800">
-            CIT Public Dataset (cit_public.json)
-          </h2>
-          {currentUser?.role === "admin" && (
-            <button
-              onClick={handleResetData}
-              disabled={loading}
-              className="text-xs font-semibold px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"
-            >
-              🔄 Reset Demo Data (Clean State)
-            </button>
+      {/* Dataset Metrics */}
+      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4 pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>📊</span> CIT Official Dataset Overview
+            </h2>
+            <p className="text-xs text-slate-500">
+              Loaded from <code className="text-sky-700 font-mono">cit_public.json</code> & verified by <code className="text-sky-700 font-mono">validator.py</code>
+            </p>
+          </div>
+
+          {user?.role === "admin" && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors"
+              >
+                📁 Upload Dataset JSON
+              </button>
+              <button
+                onClick={handleResetData}
+                disabled={loading}
+                className="text-xs font-semibold px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg border border-rose-200 transition-colors"
+              >
+                🔄 Reset Clean Data
+              </button>
+            </div>
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Rooms", count: 27, icon: "🏢" },
-            { label: "Faculty", count: 40, icon: "👨‍🏫" },
-            { label: "Student Groups", count: 14, icon: "👥" },
-            { label: "Courses", count: 62, icon: "📚" },
-            { label: "Teaching Sessions", count: 189, icon: "⏱️" },
-            { label: "Venue Bookings", count: 25, icon: "🎫" },
+            { label: "Classrooms & Labs", count: stats?.rooms?.length || 27, icon: "🏢", detail: "8 Labs, 19 Lect/Sem" },
+            { label: "Faculty Members", count: stats?.faculty?.length || 40, icon: "👨‍🏫", detail: "Across 5 Depts" },
+            { label: "Student Cohorts", count: stats?.student_groups?.length || 14, icon: "👥", detail: "Years 1 to 4" },
+            { label: "Courses Offered", count: stats?.courses?.length || 62, icon: "📚", detail: "Theory, Labs, OE" },
+            { label: "Teaching Sessions", count: stats?.total_sessions || 189, icon: "⏱️", detail: "Weekly schedule" },
+            { label: "Midsem Exams", count: stats?.total_exams || 41, icon: "📝", detail: "Halved capacity" },
           ].map((item) => (
-            <div key={item.label} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div key={item.label} className="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
               <div className="text-xl mb-1">{item.icon}</div>
-              <div className="text-2xl font-bold text-slate-900">{item.count}</div>
-              <div className="text-xs text-slate-500">{item.label}</div>
+              <div className="text-2xl font-black text-slate-900">{item.count}</div>
+              <div className="text-xs font-bold text-slate-700 mt-0.5">{item.label}</div>
+              <div className="text-[10px] text-slate-400 mt-1">{item.detail}</div>
             </div>
           ))}
         </div>
       </section>
 
+      {/* Feature Modules Quick Action Grid */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Module 1: Timetable */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center text-xl mb-3">
+              📅
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Weekly Timetable & Midsems</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              Full CP-SAT optimization with 0 hard clashes, synchronized elective basket (OEB-1, OEB-2, OEB-3),
+              lunch break (13:00-14:00), 2-hour lab blocks, and 41 midsem exams at half capacity.
+            </p>
+          </div>
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              0 Hard Clashes Guaranteed
+            </span>
+            <Link
+              href="/timetable"
+              className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1"
+            >
+              Open Timetable →
+            </Link>
+          </div>
+        </div>
+
+        {/* Module 2: Bookings */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl mb-3">
+              🎫
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Venue Bookings & AI Intake</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              Priority-based booking engine (exams &gt; classes &gt; institute &gt; guest &gt; department &gt; club).
+              Natural-language & Hinglish booking assistant with anti-bypass security and pure-code validator check.
+            </p>
+          </div>
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+              25 Requests Evaluated
+            </span>
+            <Link
+              href="/bookings"
+              className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1"
+            >
+              Manage Bookings →
+            </Link>
+          </div>
+        </div>
+
+        {/* Module 3: Disruption */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl mb-3">
+              ⚡
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Disruption Rescheduler</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              Handles faculty leaves and room maintenance with warm-start CP-SAT solver, producing minimal moves
+              (≤ 5 sessions) with zero hard violations, diff view, and admin 1-click approval.
+            </p>
+          </div>
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              Minimal Moves (≤ 5)
+            </span>
+            <Link
+              href="/disruptions"
+              className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1"
+            >
+              Test Disruption →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Admin Audit Logs (Visible only to Admin) */}
-      {currentUser?.role === "admin" && (
-        <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-8">
-          <h2 className="text-base font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <span>🛡️</span> Security & Audit Log (Admin Only)
-          </h2>
-          <div className="overflow-x-auto max-h-64 border rounded-lg">
+      {user?.role === "admin" && (
+        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>🛡️</span> Institutional Security & Audit Trail (Admin Only)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Immutable log of all schedule changes, dataset uploads, and venue approvals
+              </p>
+            </div>
+            <button
+              onClick={fetchAuditLogs}
+              className="text-xs font-semibold text-sky-600 hover:text-sky-700"
+            >
+              Refresh Logs
+            </button>
+          </div>
+
+          <div className="overflow-x-auto max-h-72 border border-slate-200 rounded-xl">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b text-slate-600 font-semibold">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold sticky top-0">
                 <tr>
-                  <th className="p-2.5">Timestamp</th>
-                  <th className="p-2.5">User</th>
-                  <th className="p-2.5">Role</th>
-                  <th className="p-2.5">Action</th>
-                  <th className="p-2.5">Target</th>
+                  <th className="p-3">Timestamp</th>
+                  <th className="p-3">User</th>
+                  <th className="p-3">Role</th>
+                  <th className="p-3">Action</th>
+                  <th className="p-3">Target</th>
+                  <th className="p-3">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {auditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-4 text-center text-slate-400">
-                      No audit records yet.
+                    <td colSpan={6} className="p-6 text-center text-slate-400">
+                      No audit events logged yet. Perform an action like schedule generation or booking.
                     </td>
                   </tr>
                 ) : (
                   auditLogs.map((log) => (
                     <tr key={log.id} className="hover:bg-slate-50">
-                      <td className="p-2.5 font-mono text-slate-500">
-                        {new Date(log.timestamp).toLocaleTimeString()}
+                      <td className="p-3 font-mono text-slate-500 whitespace-nowrap">
+                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </td>
-                      <td className="p-2.5 font-medium text-slate-800">{log.user_email}</td>
-                      <td className="p-2.5 uppercase font-mono text-xs">{log.role}</td>
-                      <td className="p-2.5 font-semibold text-sky-700">{log.action}</td>
-                      <td className="p-2.5 text-slate-500">{log.target_id || "-"}</td>
+                      <td className="p-3 font-medium text-slate-800">{log.user_email}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-slate-100 text-slate-700">
+                          {log.role}
+                        </span>
+                      </td>
+                      <td className="p-3 font-semibold text-sky-700">{log.action}</td>
+                      <td className="p-3 text-slate-600 font-mono text-[11px]">{log.target_id || "-"}</td>
+                      <td className="p-3 text-slate-500 max-w-xs truncate text-[11px]">
+                        {log.details_json || "-"}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -276,17 +421,49 @@ export default function Home() {
         </section>
       )}
 
-      {/* Rules & Architecture Overview */}
-      <section className="bg-slate-900 text-slate-100 p-6 rounded-2xl shadow-lg">
-        <h3 className="font-semibold text-sm uppercase tracking-wider text-sky-400 mb-2">
-          Strict Engineering Rules
-        </h3>
-        <ul className="text-xs space-y-1.5 text-slate-300">
-          <li>• <strong>Deterministic Python Validator</strong>: All 13 hard constraints and soft penalties are checked purely by backend Python code with zero LLM dependence.</li>
-          <li>• <strong>Offline Resilience</strong>: Manual venue booking works 100% reliably with no LLM or API keys.</li>
-          <li>• <strong>Zero Hallucination Guarantee</strong>: LLM output pipeline: Schema check → Validator → User confirmation → DB Write.</li>
-        </ul>
-      </section>
+      {/* Dataset Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-900 text-base">
+                Upload Replacement CIT Dataset JSON
+              </h3>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Paste replacement JSON conforming to the CIT public schema (<code className="font-mono">rooms</code>, <code className="font-mono">faculty</code>, <code className="font-mono">student_groups</code>, <code className="font-mono">courses</code>, <code className="font-mono">sessions</code>).
+            </p>
+            <textarea
+              value={uploadJson}
+              onChange={(e) => setUploadJson(e.target.value)}
+              placeholder="Paste valid JSON here..."
+              rows={10}
+              className="w-full text-xs font-mono p-3 border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUploadDataset}
+                disabled={loading || !uploadJson.trim()}
+                className="px-4 py-2 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded-xl disabled:opacity-50"
+              >
+                {loading ? "Validating & Loading..." : "Load Dataset"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

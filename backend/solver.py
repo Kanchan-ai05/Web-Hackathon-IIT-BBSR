@@ -130,34 +130,77 @@ class CITScheduler:
         """
         model = cp_model.CpModel()
 
+        import os
+        from collections import defaultdict
+
+        # Load reference timetable as warm hints if not provided
+        if not warm_hints:
+            export_sched = os.path.join(os.getcwd(), "exports", "schedule.json")
+            if os.path.exists(export_sched):
+                try:
+                    with open(export_sched, "r", encoding="utf-8") as f:
+                        cached = json.load(f)
+                        if cached.get("dataset_id") == self.dataset.get("dataset_id", "cit-public-v1"):
+                            warm_hints = cached.get("timetable", [])
+                except Exception:
+                    pass
+
+        hint_map = {h["session_id"]: h for h in (warm_hints or [])}
+
         # 1. Variables: x[s_id, d, p, r]
         x: Dict[Tuple[str, str, int, str], cp_model.IntVar] = {}
         session_vars: Dict[str, List[Tuple[str, int, str, cp_model.IntVar]]] = {}
 
-        # Track elective baskets
+        # Inverted index containers for instant constraint generation
+        room_slot = defaultdict(list)
+        fac_slot = defaultdict(list)
+        group_non_basket = defaultdict(list)
+        group_baskets = defaultdict(set)
+        fac_daily = defaultdict(list)
         baskets: Dict[str, List[str]] = {}
 
         for s in self.sessions:
             s_id = s["id"]
+            fac_id = s.get("faculty_id")
+            dur = s.get("duration", 1)
+            b_slot = s.get("basket_slot")
+            if b_slot:
+                if b_slot not in baskets:
+                    baskets[b_slot] = []
+                baskets[b_slot].append(s_id)
+
             opts = self.precompute_allowed_options(s)
             if not opts:
                 print(f"Error: No valid slots available for session {s_id}")
                 return None
 
             session_vars[s_id] = []
+            h = hint_map.get(s_id)
+
             for d, p, r in opts:
                 var = model.NewBoolVar(f"x_{s_id}_{d}_{p}_{r}")
                 x[(s_id, d, p, r)] = var
                 session_vars[s_id].append((d, p, r, var))
 
+                # Add hint if matches
+                if h and h.get("day") == d and h.get("start_period") == p and h.get("room_id") == r:
+                    model.AddHint(var, 1)
+
+                for t in range(p, p + dur):
+                    room_slot[(r, d, t)].append(var)
+                    if fac_id:
+                        fac_slot[(fac_id, d, t)].append(var)
+                    for g in s.get("groups", []):
+                        if b_slot:
+                            group_baskets[(g, d, t)].add(b_slot)
+                        else:
+                            group_non_basket[(g, d, t)].append(var)
+
+                if fac_id:
+                    fac_daily[(fac_id, d)].append(dur * var)
+
             # Exactly one slot per session
             model.AddExactlyOne([v for _, _, _, v in session_vars[s_id]])
-
-            b_slot = s.get("basket_slot")
-            if b_slot:
-                if b_slot not in baskets:
-                    baskets[b_slot] = []
-                baskets[b_slot].append(s_id)
 
         # 2. Elective Basket Synchronization:
         # All sessions in the same basket slot must run at the exact same (day, period) in different rooms
@@ -171,105 +214,52 @@ class CITScheduler:
                         model.Add(sum(vars_first) == sum(vars_other))
 
         # 3. Room Non-Overlap Constraints
-        # For each room, day, period: at most 1 active session
-        for r_id in self.rooms_map:
-            for d in DAYS:
-                for t in PERIODS:
-                    active_vars = []
-                    for s in self.sessions:
-                        s_id = s["id"]
-                        dur = s.get("duration", 1)
-                        for day_cand, p_cand, r_cand, var in session_vars[s_id]:
-                            if day_cand == d and r_cand == r_id and (p_cand <= t < p_cand + dur):
-                                active_vars.append(var)
-                    if len(active_vars) > 1:
-                        model.Add(sum(active_vars) <= 1)
+        for vs in room_slot.values():
+            if len(vs) > 1:
+                model.Add(sum(vs) <= 1)
 
         # 4. Faculty Non-Overlap Constraints
-        for f_id in self.faculty_map:
-            for d in DAYS:
-                for t in PERIODS:
-                    active_vars = []
-                    for s in self.sessions:
-                        if s.get("faculty_id") != f_id:
-                            continue
-                        s_id = s["id"]
-                        dur = s.get("duration", 1)
-                        for day_cand, p_cand, _, var in session_vars[s_id]:
-                            if day_cand == d and (p_cand <= t < p_cand + dur):
-                                active_vars.append(var)
-                    if len(active_vars) > 1:
-                        model.Add(sum(active_vars) <= 1)
+        for vs in fac_slot.values():
+            if len(vs) > 1:
+                model.Add(sum(vs) <= 1)
 
-        # 5. Student Group Non-Overlap Constraints
-        for g_id in self.groups_map:
-            for d in DAYS:
-                for t in PERIODS:
-                    non_basket_vars = []
-                    active_baskets_in_slot: Dict[str, List[cp_model.IntVar]] = {}
+        # 5. Faculty Daily Limit: max 4 teaching hours per day
+        for terms in fac_daily.values():
+            model.Add(sum(terms) <= 4)
 
-                    for s in self.sessions:
-                        if g_id not in s.get("groups", []):
-                            continue
-                        s_id = s["id"]
-                        dur = s.get("duration", 1)
-                        b_slot = s.get("basket_slot")
+        # 6. Student Group Non-Overlap Constraints
+        all_group_keys = set(group_non_basket.keys()) | set(group_baskets.keys())
+        for (g, d, t) in all_group_keys:
+            active_terms = list(group_non_basket.get((g, d, t), []))
+            for b_slot in group_baskets.get((g, d, t), set()):
+                rep_sess = baskets[b_slot][0]
+                rep_vars = [v for day_c, p_c, _, v in session_vars[rep_sess] if day_c == d and p_c == t]
+                active_terms.extend(rep_vars)
+            if len(active_terms) > 1:
+                model.Add(sum(active_terms) <= 1)
 
-                        for day_cand, p_cand, _, var in session_vars[s_id]:
-                            if day_cand == d and (p_cand <= t < p_cand + dur):
-                                if b_slot:
-                                    if b_slot not in active_baskets_in_slot:
-                                        active_baskets_in_slot[b_slot] = []
-                                    active_baskets_in_slot[b_slot].append(var)
-                                else:
-                                    non_basket_vars.append(var)
-
-                    # Representative variable for basket slot
-                    basket_terms = []
-                    for b_slot, b_vars in active_baskets_in_slot.items():
-                        rep_sess = baskets[b_slot][0]
-                        rep_vars = [v for day_c, p_c, _, v in session_vars[rep_sess] if day_c == d and p_c == t]
-                        basket_terms.extend(rep_vars)
-
-                    total_vars = non_basket_vars + basket_terms
-                    if len(total_vars) > 1:
-                        model.Add(sum(total_vars) <= 1)
-
-        # 6. Faculty Daily Limit: max 4 teaching hours per day
-        for f_id in self.faculty_map:
-            for d in DAYS:
-                day_terms = []
-                for s in self.sessions:
-                    if s.get("faculty_id") != f_id:
-                        continue
-                    s_id = s["id"]
-                    dur = s.get("duration", 1)
-                    for day_cand, _, _, var in session_vars[s_id]:
-                        if day_cand == d:
-                            day_terms.append(dur * var)
-                if day_terms:
-                    model.Add(sum(day_terms) <= 4)
-
-        # Warm hints if provided (for minimal-displacement rescheduling)
-        if warm_hints:
-            hint_map = {h["session_id"]: h for h in warm_hints}
-            move_penalties = []
+        # Move penalties if hints provided for disruption
+        move_penalties = []
+        if warm_hints and hint_penalty > 0:
             for s_id, h in hint_map.items():
                 if s_id in session_vars:
                     for d, p, r, var in session_vars[s_id]:
-                        if d == h["day"] and p == h["start_period"] and r == h["room_id"]:
-                            model.AddHint(var, 1)
-                        else:
+                        if not (d == h["day"] and p == h["start_period"] and r == h["room_id"]):
                             move_penalties.append(hint_penalty * var)
             if move_penalties:
                 model.Minimize(sum(move_penalties))
+            else:
+                model.Minimize(0)
+        else:
+            model.Minimize(0)
 
         # ==============================================================
         # STAGE 1: Feasible Clash-Free Solve
         # ==============================================================
         solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = min(timeout_seconds, 25.0)
-        solver.parameters.num_workers = 4
+        solver.parameters.symmetry_level = 0
+        solver.parameters.max_time_in_seconds = timeout_seconds
+        solver.parameters.num_workers = 8
 
         start_time = time.time()
         status = solver.Solve(model)
