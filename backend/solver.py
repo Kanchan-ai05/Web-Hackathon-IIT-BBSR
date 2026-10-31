@@ -265,7 +265,7 @@ class CITScheduler:
         status = solver.Solve(model)
 
         if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            print(f"Stage 1 status: {status}")
+            print(f"Stage 1 status: {status}, validation: {model.Validate()}")
             return None
 
         # Build initial feasible timetable

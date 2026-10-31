@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .loader import init_db
 from .models import Room
-from .routers import auth_router, admin_router, timetable_router, booking_router, ai_router, conflict_router, analytics_router
+from .routers import auth_router, admin_router, timetable_router, booking_router, ai_router, conflict_router, analytics_router, explain_router
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
@@ -52,6 +52,7 @@ app.include_router(booking_router.router)
 app.include_router(ai_router.router)
 app.include_router(conflict_router.router)
 app.include_router(analytics_router.router)
+app.include_router(explain_router.router)
 
 # Mount exports folder for downloadable schedule.json and schedule_after.json
 exports_dir = os.path.join(root_dir, "exports")
@@ -128,6 +129,9 @@ def root_info():
             "conflicts_details": "/api/conflicts/details",
             "analytics_overview": "/api/analytics/overview",
             "bookings": "/api/bookings",
+            "explain_sessions": "/api/explain/sessions",
+            "explain_session": "/api/explain/session/{session_id}",
+            "explain_compare_room": "/api/explain/compare-room/{session_id}/{candidate_room_id}",
             "schedule_export": "/exports/schedule.json",
             "disruption_schedule_export": "/exports/schedule_after.json",
         },

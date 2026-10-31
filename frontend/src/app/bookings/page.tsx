@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { useAiSettings } from "../../context/AiContext";
 
@@ -528,6 +529,13 @@ export default function BookingsPage() {
 
                       {/* Actions */}
                       <td className="p-3 text-right whitespace-nowrap">
+                        <Link
+                          href={`/explain?booking_id=${req.id}`}
+                          className="text-[11px] font-semibold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors inline-flex items-center gap-1 mr-1.5"
+                          title="Why this decision? View full priority & quota explanation"
+                        >
+                          <span>💡</span> Explain
+                        </Link>
                         {!isCancelled && (
                           <button
                             onClick={() => handleCancelBooking(req.id)}

@@ -20,6 +20,7 @@ This document strictly complies with Section 6 of the CIT Campus Scheduling Prob
   1. **Natural Language / Hinglish Booking Request Parser**: Converts unstructured text descriptions (e.g. *"Dramatics needs SH-1 Thursday 6 to 9 pm for our stage play, 130 audience"*) into structured booking draft JSON (`day`, `periods`, `room_types`, `features`, `attendance`).
   2. **Decision Explainer**: Translates validator output or rejection reasons into friendly human-readable explanations.
   3. **Ask Timetable AI Assistant**: Responds to user questions regarding lecture times, room allocations, lunch restrictions, and midsem exam rules using current schedule facts.
+  4. **Explainable Scheduling Narrative Synthesis**: Converts the 5-pillar mathematical and institutional proof data into conversational summaries with an explicit disclaimer ("All hard and soft scheduling decisions are computed deterministically by the pure-Python CIT solver and validator. AI does not validate correctness").
 - **Workflow Pipeline**:
   $$\text{User Request} \rightarrow \text{LLM Parsing} \rightarrow \text{Pydantic Schema Check} \rightarrow \mathbf{Deterministic\ Validator} \rightarrow \text{User Confirmation} \rightarrow \text{DB Write}$$
 

@@ -23,6 +23,7 @@ export default function Navbar() {
   const navLinks = [
     { href: "/", label: "Overview", icon: "🏛️" },
     { href: "/timetable", label: "Timetable & Exams", icon: "📅" },
+    { href: "/explain", label: "Explain Decisions", icon: "💡" },
     { href: "/bookings", label: "Venue Bookings", icon: "🎫" },
     { href: "/conflicts", label: "Conflict Monitor", icon: "⚠️" },
     { href: "/analytics", label: "Campus Analytics", icon: "📊" },

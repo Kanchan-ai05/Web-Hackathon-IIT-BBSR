@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { useAiSettings } from "../../context/AiContext";
 
@@ -681,15 +682,24 @@ export default function TimetablePage() {
                                       </span>
                                     </div>
 
-                                    <div className="mt-1 flex flex-wrap gap-0.5">
-                                      {slot.groups.map((g) => (
-                                        <span
-                                          key={g}
-                                          className="text-[9px] bg-white/80 border border-slate-200 px-1 rounded text-slate-600 font-mono"
-                                        >
-                                          {g}
-                                        </span>
-                                      ))}
+                                    <div className="mt-1 flex items-center justify-between gap-1">
+                                      <div className="flex flex-wrap gap-0.5">
+                                        {slot.groups.map((g) => (
+                                          <span
+                                            key={g}
+                                            className="text-[9px] bg-white/80 border border-slate-200 px-1 rounded text-slate-600 font-mono"
+                                          >
+                                            {g}
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <Link
+                                        href={`/explain?session_id=${slot.session_id}`}
+                                        className="text-[10px] font-semibold text-sky-700 hover:text-sky-900 bg-white/90 hover:bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 transition-colors flex items-center gap-0.5 shadow-2xs whitespace-nowrap"
+                                        title="Why this room and time? See full explainability analysis"
+                                      >
+                                        <span>💡</span> Why?
+                                      </Link>
                                     </div>
                                   </div>
                                 );
@@ -735,12 +745,13 @@ export default function TimetablePage() {
                   <th className="p-3">Students</th>
                   <th className="p-3">Allocated Slot</th>
                   <th className="p-3">Allocated Rooms</th>
+                  <th className="p-3 text-right">Rationale</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {exams.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                    <td colSpan={7} className="p-8 text-center text-slate-400">
                       Loading midsem exam allocations... Please click &quot;Run CP-SAT Solver&quot; if not yet generated.
                     </td>
                   </tr>
@@ -780,6 +791,15 @@ export default function TimetablePage() {
                             </span>
                           ))}
                         </div>
+                      </td>
+                      <td className="p-3 text-right">
+                        <Link
+                          href={`/explain?exam_id=${ex.exam_id || ex.id}`}
+                          className="text-[11px] font-semibold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors inline-flex items-center gap-1 shadow-2xs whitespace-nowrap"
+                          title="Why this slot and halved-capacity rooms? See explainability analysis"
+                        >
+                          <span>💡</span> Explain
+                        </Link>
                       </td>
                     </tr>
                   ))
