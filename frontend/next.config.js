@@ -11,6 +11,32 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  ...(isGithubPages
+    ? {}
+    : {
+        async rewrites() {
+          const backendTarget =
+            process.env.BACKEND_PROXY_URL || "https://cit-scheduling-api.onrender.com";
+          return [
+            {
+              source: "/api/:path*",
+              destination: `${backendTarget}/api/:path*`,
+            },
+            {
+              source: "/exports/:path*",
+              destination: `${backendTarget}/exports/:path*`,
+            },
+            {
+              source: "/docs",
+              destination: `${backendTarget}/docs`,
+            },
+            {
+              source: "/openapi.json",
+              destination: `${backendTarget}/openapi.json`,
+            },
+          ];
+        },
+      }),
 };
 
 module.exports = nextConfig;

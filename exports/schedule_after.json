@@ -13,15 +13,15 @@
         "CE-3"
       ],
       "status": "moved",
-      "change_type": "room_and_timing",
+      "change_type": "room_only",
       "old": {
         "day": "TUE",
         "start_period": 5,
         "room_id": "CR-101"
       },
       "new": {
-        "day": "WED",
-        "start_period": 2,
+        "day": "TUE",
+        "start_period": 5,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -30,8 +30,8 @@
         "room_id": "CR-101"
       },
       "new_slot": {
-        "day": "WED",
-        "start_period": 2,
+        "day": "TUE",
+        "start_period": 5,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -47,15 +47,15 @@
         "CE-3"
       ],
       "status": "moved",
-      "change_type": "room_and_timing",
+      "change_type": "room_only",
       "old": {
         "day": "TUE",
         "start_period": 4,
         "room_id": "CR-101"
       },
       "new": {
-        "day": "WED",
-        "start_period": 1,
+        "day": "TUE",
+        "start_period": 4,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -64,8 +64,8 @@
         "room_id": "CR-101"
       },
       "new_slot": {
-        "day": "WED",
-        "start_period": 1,
+        "day": "TUE",
+        "start_period": 4,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -81,15 +81,15 @@
         "CE-3"
       ],
       "status": "moved",
-      "change_type": "room_and_timing",
+      "change_type": "room_only",
       "old": {
         "day": "TUE",
         "start_period": 2,
         "room_id": "CR-101"
       },
       "new": {
-        "day": "MON",
-        "start_period": 4,
+        "day": "TUE",
+        "start_period": 2,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -98,8 +98,8 @@
         "room_id": "CR-101"
       },
       "new_slot": {
-        "day": "MON",
-        "start_period": 4,
+        "day": "TUE",
+        "start_period": 2,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -123,7 +123,7 @@
       },
       "new": {
         "day": "MON",
-        "start_period": 2,
+        "start_period": 9,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -133,7 +133,7 @@
       },
       "new_slot": {
         "day": "MON",
-        "start_period": 2,
+        "start_period": 9,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -152,15 +152,15 @@
       "change_type": "new_session",
       "old": null,
       "new": {
-        "day": "MON",
-        "start_period": 1,
-        "room_id": "LH-5"
+        "day": "FRI",
+        "start_period": 9,
+        "room_id": "LH-3"
       },
       "old_slot": null,
       "new_slot": {
-        "day": "MON",
-        "start_period": 1,
-        "room_id": "LH-5"
+        "day": "FRI",
+        "start_period": 9,
+        "room_id": "LH-3"
       },
       "why": "Newly added curriculum session scheduled",
       "reason": "Newly added curriculum session scheduled"
@@ -175,7 +175,7 @@
         "Y1-B"
       ],
       "status": "moved",
-      "change_type": "room_and_timing",
+      "change_type": "room_only",
       "old": {
         "day": "TUE",
         "start_period": 3,
@@ -183,8 +183,8 @@
       },
       "new": {
         "day": "TUE",
-        "start_period": 1,
-        "room_id": "LH-1"
+        "start_period": 3,
+        "room_id": "CR-102"
       },
       "old_slot": {
         "day": "TUE",
@@ -193,8 +193,8 @@
       },
       "new_slot": {
         "day": "TUE",
-        "start_period": 1,
-        "room_id": "LH-1"
+        "start_period": 3,
+        "room_id": "CR-102"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
       "reason": "Room CR-101 closed for maintenance on TUE"
@@ -360,8 +360,8 @@
     {
       "session_id": "HS101-B-L1",
       "day": "TUE",
-      "start_period": 1,
-      "room_id": "LH-1"
+      "start_period": 3,
+      "room_id": "CR-102"
     },
     {
       "session_id": "HS101-B-L2",
@@ -1229,14 +1229,14 @@
     },
     {
       "session_id": "CE301-L2",
-      "day": "WED",
-      "start_period": 2,
+      "day": "TUE",
+      "start_period": 5,
       "room_id": "AUD"
     },
     {
       "session_id": "CE301-L3",
-      "day": "WED",
-      "start_period": 1,
+      "day": "TUE",
+      "start_period": 4,
       "room_id": "AUD"
     },
     {
@@ -1247,8 +1247,8 @@
     },
     {
       "session_id": "CE302-L2",
-      "day": "MON",
-      "start_period": 4,
+      "day": "TUE",
+      "start_period": 2,
       "room_id": "AUD"
     },
     {
@@ -1260,7 +1260,7 @@
     {
       "session_id": "CE303-L1",
       "day": "MON",
-      "start_period": 2,
+      "start_period": 9,
       "room_id": "AUD"
     },
     {
@@ -1337,9 +1337,9 @@
     },
     {
       "session_id": "CS101-REMEDIAL",
-      "day": "MON",
-      "start_period": 1,
-      "room_id": "LH-5"
+      "day": "FRI",
+      "start_period": 9,
+      "room_id": "LH-3"
     }
   ],
   "exams": [
@@ -1709,12 +1709,15 @@
       "booking_id": "BR-01",
       "title": "Spectra '27 Inauguration",
       "category": "institute_event",
-      "status": "alternative",
-      "reason": "Room AUD occupied by regular_session (CE302-L2) on MON period 4",
-      "room_id": null,
-      "assigned_room": null,
-      "day": null,
-      "periods": []
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "MON",
+      "periods": [
+        4,
+        5
+      ]
     },
     {
       "booking_id": "BR-02",
@@ -2062,15 +2065,15 @@
   "validation": {
     "valid": true,
     "hard_violations_count": 0,
-    "soft_penalty": 1330,
-    "booking_score": 126,
+    "soft_penalty": 1355,
+    "booking_score": 136,
     "soft_breakdown": {
       "faculty_avoid_preference": 0,
-      "student_group_gap": 325,
-      "student_group_daily_excess": 225,
-      "course_daily_repeat": 760,
+      "student_group_gap": 335,
+      "student_group_daily_excess": 210,
+      "course_daily_repeat": 780,
       "room_underutilization": 20,
-      "period_9_session": 0
+      "period_9_session": 10
     }
   }
 }

@@ -15,7 +15,7 @@ from ..models import (
     BookingRequest,
     Exam
 )
-from ..auth import get_current_user, User
+from ..auth import get_optional_current_user, User
 from backend.analytics_service import CITAnalyticsService
 from .timetable_router import _build_dataset_dict
 
@@ -62,7 +62,7 @@ def get_campus_overview(
     department: Optional[str] = Query(None, description="Filter by department (e.g. CSE, ECE, ME, CE)"),
     day: Optional[str] = Query(None, description="Filter by day of week (MON, TUE, WED, THU, FRI)"),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Returns comprehensive institutional metrics across rooms, faculty workload, and bookings."""
     service = _get_analytics_service(db)
@@ -72,7 +72,7 @@ def get_campus_overview(
 def export_csv_report(
     report_type: str = Query("rooms", description="Report type: rooms, faculty, bookings, or summary"),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Generates and downloads real-time CSV report."""
     service = _get_analytics_service(db)

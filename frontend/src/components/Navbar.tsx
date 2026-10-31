@@ -8,7 +8,7 @@ import { useAiSettings } from "../context/AiContext";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, quickLogin, logout, loading, apiUrl, updateApiUrl } = useAuth();
+  const { user, quickLogin, logout, loading, apiUrl, updateApiUrl, apiStatus, apiLatency, checkHealth } = useAuth();
   const { apiKey, provider, isConnected, modelName, testLoading, saveSettings, testConnection, clearSettings } = useAiSettings();
 
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -17,6 +17,8 @@ export default function Navbar() {
   const [selectedProvider, setSelectedProvider] = useState<"gemini" | "openai">(provider);
   const [showKey, setShowKey] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error" | null; message: string }>({ type: null, message: "" });
+  const [pingLoading, setPingLoading] = useState(false);
+  const [pingResult, setPingResult] = useState<string | null>(null);
 
   const navLinks = [
     { href: "/", label: "Overview", icon: "🏛️" },
@@ -32,7 +34,20 @@ export default function Navbar() {
     setInputApiUrl(apiUrl);
     setSelectedProvider(provider);
     setFeedback({ type: null, message: "" });
+    setPingResult(null);
     setIsAiModalOpen(true);
+  };
+
+  const handlePingBackend = async () => {
+    setPingLoading(true);
+    setPingResult(null);
+    const ok = await checkHealth(inputApiUrl);
+    setPingLoading(false);
+    if (ok) {
+      setPingResult("Connected successfully! API is online & responsive.");
+    } else {
+      setPingResult("Could not reach backend at this URL. Verify the server is running or wait a moment if waking up.");
+    }
   };
 
   const handleTestKey = async () => {
@@ -103,6 +118,44 @@ export default function Navbar() {
 
             {/* User Profile, Role Switcher & AI Config */}
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Backend API Connection Pill */}
+              <button
+                onClick={handleOpenAiModal}
+                title={`API Server: ${apiUrl} (${apiStatus === "connected" ? `Online, ${apiLatency}ms latency` : apiStatus === "connecting" ? "Connecting/Waking up..." : "Offline/Unreachable"}). Click to configure.`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                  apiStatus === "connected"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                    : apiStatus === "connecting"
+                    ? "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+                    : "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100"
+                }`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    apiStatus === "connected"
+                      ? "bg-emerald-500 animate-pulse"
+                      : apiStatus === "connecting"
+                      ? "bg-amber-500 animate-ping"
+                      : "bg-rose-500"
+                  }`}
+                />
+                <span className="hidden sm:inline font-semibold">API:</span>
+                <span className="font-mono text-[11px]">
+                  {apiStatus === "connected"
+                    ? apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1")
+                      ? "Local (8000)"
+                      : "Cloud"
+                    : apiStatus === "connecting"
+                    ? "Connecting..."
+                    : "Offline"}
+                </span>
+                {apiLatency !== null && apiStatus === "connected" && (
+                  <span className="hidden lg:inline text-[10px] text-emerald-600 font-mono">
+                    {apiLatency}ms
+                  </span>
+                )}
+              </button>
+
               {/* AI Key & Status Pill */}
               <button
                 onClick={handleOpenAiModal}
@@ -332,11 +385,21 @@ export default function Navbar() {
               </div>
 
               {/* Backend API Endpoint Switcher */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Backend API Server Endpoint
-                </label>
-                <div className="flex gap-2 mb-1.5">
+              <div className="pt-3 border-t border-slate-100">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Backend API Server Endpoint
+                  </label>
+                  <a
+                    href={`${inputApiUrl}/docs`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-sky-600 hover:underline font-medium"
+                  >
+                    Interactive Docs (/docs) ↗
+                  </a>
+                </div>
+                <div className="flex gap-2 mb-2">
                   <input
                     type="text"
                     value={inputApiUrl}
@@ -344,12 +407,38 @@ export default function Navbar() {
                     placeholder="https://cit-scheduling-api.onrender.com or http://localhost:8000"
                     className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
+                  <button
+                    type="button"
+                    disabled={pingLoading || !inputApiUrl.trim()}
+                    onClick={handlePingBackend}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <span className={pingLoading ? "animate-spin" : ""}>🔄</span>
+                    <span>{pingLoading ? "Pinging..." : "Ping API"}</span>
+                  </button>
                 </div>
+
+                {pingResult && (
+                  <div
+                    className={`mb-2 p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
+                      pingResult.includes("Connected")
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                        : "bg-rose-50 text-rose-800 border border-rose-200"
+                    }`}
+                  >
+                    <span>{pingResult.includes("Connected") ? "✅" : "⚠️"}</span>
+                    <span>{pingResult}</span>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[10px] text-slate-400">Presets:</span>
                   <button
                     type="button"
-                    onClick={() => setInputApiUrl("https://cit-scheduling-api.onrender.com")}
+                    onClick={() => {
+                      setInputApiUrl("https://cit-scheduling-api.onrender.com");
+                      setPingResult(null);
+                    }}
                     className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
                       inputApiUrl.includes("render.com")
                         ? "bg-sky-100 text-sky-800 border-sky-300 font-semibold"
@@ -360,7 +449,10 @@ export default function Navbar() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setInputApiUrl("http://localhost:8000")}
+                    onClick={() => {
+                      setInputApiUrl("http://localhost:8000");
+                      setPingResult(null);
+                    }}
                     className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
                       inputApiUrl.includes("localhost") || inputApiUrl.includes("127.0.0.1")
                         ? "bg-sky-100 text-sky-800 border-sky-300 font-semibold"

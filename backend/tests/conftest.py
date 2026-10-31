@@ -18,8 +18,13 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_shared_database():
+    import os
+    from backend.app import models  # Ensure all models are registered on Base
     Base.metadata.create_all(bind=test_engine)
-    with open("data/cit_public.json", "r", encoding="utf-8") as f:
+    data_path = "data/cit_public.json"
+    if not os.path.exists(data_path):
+        data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "cit_public.json")
+    with open(data_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     db = TestingSessionLocal()
     try:

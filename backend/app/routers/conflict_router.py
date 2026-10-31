@@ -16,7 +16,7 @@ from ..models import (
     BookingRequest,
     Exam
 )
-from ..auth import get_current_user, User
+from ..auth import get_optional_current_user, User
 from backend.conflict_monitor import CITConflictMonitor
 from .timetable_router import _build_dataset_dict
 
@@ -83,7 +83,7 @@ def _get_monitor(db: Session) -> CITConflictMonitor:
 @router.get("/summary")
 def get_conflict_summary(
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Provides high-level conflict status, risk distributions, and alerts."""
     monitor = _get_monitor(db)
@@ -118,7 +118,7 @@ def get_conflict_details(
     severity: Optional[str] = Query(None, description="Filter by severity (Critical, High, Medium, Low)"),
     type: Optional[str] = Query(None, description="Filter by conflict type"),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Lists granular detected conflicts with reasons and concrete recommendations."""
     monitor = _get_monitor(db)
@@ -138,7 +138,7 @@ def get_conflict_details(
 def get_room_risk_scores(
     level: Optional[str] = Query(None, description="Filter by risk level (Critical, High, Medium, Low)"),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Returns deterministic room risk scores and demand indicators."""
     monitor = _get_monitor(db)
@@ -156,7 +156,7 @@ def get_room_risk_scores(
 def get_booking_risks(
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by status (pending, approved)"),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Predictive booking risk assessment detecting overbooking before approval."""
     monitor = _get_monitor(db)

@@ -54,6 +54,9 @@ interface AuthContextType {
   token: string | null;
   apiUrl: string;
   updateApiUrl: (url: string) => void;
+  apiStatus: "connected" | "connecting" | "offline";
+  apiLatency: number | null;
+  checkHealth: (targetUrl?: string) => Promise<boolean>;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   quickLogin: (role: string) => Promise<void>;
@@ -66,6 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [apiStatus, setApiStatus] = useState<"connected" | "connecting" | "offline">("connecting");
+  const [apiLatency, setApiLatency] = useState<number | null>(null);
+
   const [apiUrl, setApiUrl] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("cit_api_url");
@@ -78,13 +84,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   });
 
+  const checkHealth = async (targetUrl?: string): Promise<boolean> => {
+    const url = (targetUrl || apiUrl).replace(/\/+$/, "");
+    const start = Date.now();
+    try {
+      const res = await fetch(`${url}/health`, { method: "GET", cache: "no-store" });
+      if (res.ok) {
+        setApiStatus("connected");
+        setApiLatency(Date.now() - start);
+        return true;
+      }
+    } catch (e) {
+      try {
+        const res2 = await fetch(`${url}/api/health`, { method: "GET", cache: "no-store" });
+        if (res2.ok) {
+          setApiStatus("connected");
+          setApiLatency(Date.now() - start);
+          return true;
+        }
+      } catch (err2) {}
+    }
+    setApiStatus("offline");
+    setApiLatency(null);
+    return false;
+  };
+
   const updateApiUrl = (newUrl: string) => {
     const trimmed = (newUrl || "").trim().replace(/\/+$/, "");
     setApiUrl(trimmed);
     if (typeof window !== "undefined") {
       localStorage.setItem("cit_api_url", trimmed);
     }
+    setApiStatus("connecting");
+    checkHealth(trimmed);
   };
+
+  useEffect(() => {
+    checkHealth();
+    const interval = setInterval(() => {
+      checkHealth();
+    }, 25000);
+    return () => clearInterval(interval);
+  }, [apiUrl]);
 
   useEffect(() => {
     // Restore session from localStorage or auto-login as Admin
@@ -104,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Default auto-login to Admin for seamless demo experience
-    quickLogin("admin").finally(() => setLoading(false));
+    quickLogin("admin").catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -154,6 +195,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         apiUrl,
         updateApiUrl,
+        apiStatus,
+        apiLatency,
+        checkHealth,
         loading,
         login,
         quickLogin,

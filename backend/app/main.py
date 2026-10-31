@@ -25,10 +25,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS: allow specific frontend domain in production or all in dev
+from fastapi.staticfiles import StaticFiles
+
+# Configure CORS: allow all origins so frontend connects seamlessly from any domain
 origins_env = os.getenv("ALLOWED_ORIGINS") or os.getenv("FRONTEND_URL")
-if origins_env:
+if origins_env and origins_env != "*":
     allow_origins = [orig.strip() for orig in origins_env.split(",") if orig.strip()]
+    if "*" not in allow_origins:
+        allow_origins.append("*")
 else:
     allow_origins = ["*"]
 
@@ -48,6 +52,20 @@ app.include_router(booking_router.router)
 app.include_router(ai_router.router)
 app.include_router(conflict_router.router)
 app.include_router(analytics_router.router)
+
+# Mount exports folder for downloadable schedule.json and schedule_after.json
+exports_dir = os.path.join(root_dir, "exports")
+if not os.path.exists(exports_dir):
+    exports_dir = os.path.join(backend_dir, "..", "exports")
+if os.path.exists(exports_dir):
+    app.mount("/exports", StaticFiles(directory=exports_dir), name="exports")
+
+# Mount frontend static build if available for merged full-stack hosting
+frontend_out = os.path.join(root_dir, "frontend", "out")
+if not os.path.exists(frontend_out):
+    frontend_out = os.path.join(backend_dir, "..", "frontend", "out")
+if os.path.exists(frontend_out):
+    app.mount("/Web-Hackathon-IIT-BBSR", StaticFiles(directory=frontend_out, html=True), name="frontend_gh_pages")
 
 @app.on_event("startup")
 def on_startup():
@@ -91,4 +109,31 @@ def healthcheck():
         "status": "healthy",
         "service": "cit-scheduling-backend",
         "institute": "Chilika Institute of Technology"
+    }
+
+@app.get("/")
+def root_info():
+    """Unified entry point providing platform status, connected URLs, and API endpoints."""
+    return {
+        "title": "Chilika Institute of Technology (CIT) - Web Platform API",
+        "status": "online",
+        "version": "1.0.0",
+        "documentation": "/docs",
+        "health": "/health",
+        "web_platform_live_url": "https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/",
+        "endpoints": {
+            "timetable_metadata": "/api/timetable/metadata",
+            "timetable": "/api/timetable",
+            "conflicts_summary": "/api/conflicts/summary",
+            "conflicts_details": "/api/conflicts/details",
+            "analytics_overview": "/api/analytics/overview",
+            "bookings": "/api/bookings",
+            "schedule_export": "/exports/schedule.json",
+            "disruption_schedule_export": "/exports/schedule_after.json",
+        },
+        "links": {
+            "github_repository": "https://github.com/Kanchan-ai05/Web-Hackathon-IIT-BBSR",
+            "live_ui": "https://kanchan-ai05.github.io/Web-Hackathon-IIT-BBSR/",
+            "api_server": "https://cit-scheduling-api.onrender.com"
+        }
     }
