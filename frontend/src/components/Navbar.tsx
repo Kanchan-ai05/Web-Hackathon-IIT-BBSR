@@ -20,14 +20,51 @@ export default function Navbar() {
   const [pingLoading, setPingLoading] = useState(false);
   const [pingResult, setPingResult] = useState<string | null>(null);
 
-  const navLinks = [
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const navGroups = [
+    {
+      id: "scheduling",
+      label: "Timetable & Bookings",
+      icon: "📅",
+      links: [
+        { href: "/timetable", label: "Timetable & Exams", icon: "📅", desc: "CP-SAT 189 classes & 41 exams" },
+        { href: "/explain", label: "Explain Decisions", icon: "💡", desc: "Deterministic 5-pillar reasoning" },
+        { href: "/bookings", label: "Venue Bookings", icon: "🎫", desc: "Requests & auto-priority" },
+        { href: "/conflicts", label: "Conflict Monitor", icon: "⚠️", desc: "Continuous overlap & risk radar" },
+        { href: "/disruptions", label: "Disruption Engine", icon: "⚡", desc: "Rescheduling with minimal moves" },
+      ]
+    },
+    {
+      id: "operations",
+      label: "Smart Operations",
+      icon: "🏢",
+      links: [
+        { href: "/navigation", label: "Campus Navigation", icon: "🧭", desc: "Floor-wise map & accessible routing" },
+        { href: "/checkin", label: "Smart QR Check-In", icon: "📱", desc: "Real occupancy & unused release" },
+        { href: "/calendar", label: "Academic Calendar", icon: "🗓️", desc: "Classes, exams & milestones" },
+        { href: "/equipment", label: "Lab & Equipment", icon: "🔬", desc: "Apparatus catalog & booking" },
+        { href: "/events", label: "Events Hub", icon: "🎪", desc: "Proposals & venue matching" },
+        { href: "/maintenance", label: "Maintenance Hub", icon: "🛠️", desc: "Tickets & scheduling unavailabilities" },
+      ]
+    },
+    {
+      id: "executive",
+      label: "Command & AI",
+      icon: "🎛️",
+      links: [
+        { href: "/command", label: "Command Centre", icon: "🎛️", desc: "Central operational pulse" },
+        { href: "/copilot", label: "AI Campus Copilot", icon: "🤖", desc: "Conversational assistant grounded in DB" },
+        { href: "/green", label: "Green Analytics", icon: "🌱", desc: "Energy waste & carbon footprint" },
+        { href: "/emergency", label: "Emergency Protocols", icon: "🚨", desc: "Lockdown & contingency relocate" },
+        { href: "/analytics", label: "Campus Analytics", icon: "📊", desc: "Utilisation & workload charts" },
+      ]
+    }
+  ];
+
+  const allNavLinks = [
     { href: "/", label: "Overview", icon: "🏛️" },
-    { href: "/timetable", label: "Timetable & Exams", icon: "📅" },
-    { href: "/explain", label: "Explain Decisions", icon: "💡" },
-    { href: "/bookings", label: "Venue Bookings", icon: "🎫" },
-    { href: "/conflicts", label: "Conflict Monitor", icon: "⚠️" },
-    { href: "/analytics", label: "Campus Analytics", icon: "📊" },
-    { href: "/disruptions", label: "Disruption Engine", icon: "⚡" },
+    ...navGroups.flatMap(g => g.links)
   ];
 
   const handleOpenAiModal = () => {
@@ -97,21 +134,72 @@ export default function Navbar() {
 
               {/* Navigation Links */}
               <nav className="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-200">
-                {navLinks.map((link) => {
-                  const isActive = pathname === link.href;
+                <Link
+                  href="/"
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                    pathname === "/"
+                      ? "bg-sky-50 text-sky-700"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <span>🏛️</span>
+                  <span>Overview</span>
+                </Link>
+
+                {navGroups.map((group) => {
+                  const isGroupActive = group.links.some((l) => pathname === l.href);
+                  const isOpen = openDropdown === group.id;
+
                   return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                        isActive
-                          ? "bg-sky-50 text-sky-700"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                      }`}
+                    <div
+                      key={group.id}
+                      className="relative"
+                      onMouseEnter={() => setOpenDropdown(group.id)}
+                      onMouseLeave={() => setOpenDropdown(null)}
                     >
-                      <span>{link.icon}</span>
-                      <span>{link.label}</span>
-                    </Link>
+                      <button
+                        onClick={() => setOpenDropdown(isOpen ? null : group.id)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                          isGroupActive
+                            ? "bg-sky-50 text-sky-700"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                        }`}
+                      >
+                        <span>{group.icon}</span>
+                        <span>{group.label}</span>
+                        <span className="text-[9px] text-slate-400">▼</span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="absolute top-full left-0 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95">
+                          <div className="space-y-1">
+                            {group.links.map((link) => {
+                              const isActive = pathname === link.href;
+                              return (
+                                <Link
+                                  key={link.href}
+                                  href={link.href}
+                                  onClick={() => setOpenDropdown(null)}
+                                  className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${
+                                    isActive
+                                      ? "bg-sky-50 text-sky-700 font-semibold"
+                                      : "text-slate-700 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  <span className="text-base shrink-0 mt-0.5">{link.icon}</span>
+                                  <div>
+                                    <div className="text-xs font-bold leading-tight">{link.label}</div>
+                                    <div className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                                      {link.desc}
+                                    </div>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </nav>
@@ -227,7 +315,7 @@ export default function Navbar() {
 
           {/* Mobile Nav links */}
           <div className="flex md:hidden border-t border-slate-100 py-2 space-x-2 overflow-x-auto">
-            {navLinks.map((link) => {
+            {allNavLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link

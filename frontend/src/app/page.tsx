@@ -356,6 +356,65 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Smart Campus Management Ecosystem Showcase Grid */}
+      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🏛️</span>
+              <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
+                Smart Campus Management Ecosystem
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              10 comprehensive operational modules integrated with MongoDB spatial nodes, lab registers, and CP-SAT solvers.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200 w-fit">
+            10 Modules Active
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            { title: "Campus Navigation", href: "/navigation", icon: "🧭", badge: "2D Floor Plan", desc: "Interactive locator with wheelchair & elevator routing." },
+            { title: "QR Check-In", href: "/checkin", icon: "📱", badge: "Headcount Pulse", desc: "Live room utilization with authorized unused release." },
+            { title: "Academic Calendar", href: "/calendar", icon: "🗓️", badge: "Unified Feed", desc: "Classes, midsems, holidays & clash radar." },
+            { title: "Lab & Equipment", href: "/equipment", icon: "🔬", badge: "Hardware Catalog", desc: "Reserve specialized lab tools with class clash check." },
+            { title: "Events Hub", href: "/events", icon: "🎪", badge: "Smart Venue Recs", desc: "Propose campus events with automated room matching." },
+            { title: "Maintenance", href: "/maintenance", icon: "🛠️", badge: "Auto-Lock Sync", desc: "Facility tickets synchronize RoomUnavailability into DB." },
+            { title: "AI Campus Copilot", href: "/copilot", icon: "🤖", badge: "Fact-Grounded", desc: "Role-scoped conversational query engine." },
+            { title: "Green Analytics", href: "/green", icon: "🌱", badge: "Energy & Carbon", desc: "Track idle HVAC power waste and cost savings." },
+            { title: "Command Centre", href: "/command", icon: "🎛️", badge: "Executive Pulse", desc: "Unified occupancy, conflict, and safety dashboard." },
+            { title: "Emergency Protocols", href: "/emergency", icon: "🚨", badge: "Contingency Move", desc: "Lockdowns with automated class relocation proposals." },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/20 transition-all flex flex-col justify-between group shadow-2xs"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl">{item.icon}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-800">
+                    {item.badge}
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-slate-900 text-sm mt-3 group-hover:text-blue-600 transition">
+                  {item.title}
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                  {item.desc}
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-end text-[11px] font-bold text-blue-600 group-hover:translate-x-0.5 transition">
+                Open Module →
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Admin Audit Logs (Visible only to Admin) */}
       {user?.role === "admin" && (
         <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">

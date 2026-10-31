@@ -14,7 +14,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .loader import init_db
 from .models import Room
-from .routers import auth_router, admin_router, timetable_router, booking_router, ai_router, conflict_router, analytics_router, explain_router
+from .mongodb import init_mongodb, is_mongodb_live
+from .routers import (
+    auth_router,
+    admin_router,
+    timetable_router,
+    booking_router,
+    ai_router,
+    conflict_router,
+    analytics_router,
+    explain_router,
+    navigation_router,
+    checkin_router,
+    calendar_router,
+    equipment_router,
+    events_router,
+    maintenance_router,
+    copilot_router,
+    green_router,
+    command_router,
+    emergency_router
+)
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
@@ -53,6 +73,16 @@ app.include_router(ai_router.router)
 app.include_router(conflict_router.router)
 app.include_router(analytics_router.router)
 app.include_router(explain_router.router)
+app.include_router(navigation_router.router)
+app.include_router(checkin_router.router)
+app.include_router(calendar_router.router)
+app.include_router(equipment_router.router)
+app.include_router(events_router.router)
+app.include_router(maintenance_router.router)
+app.include_router(copilot_router.router)
+app.include_router(green_router.router)
+app.include_router(command_router.router)
+app.include_router(emergency_router.router)
 
 # Mount exports folder for downloadable schedule.json and schedule_after.json
 exports_dir = os.path.join(root_dir, "exports")
@@ -70,10 +100,17 @@ if os.path.exists(frontend_out):
 
 @app.on_event("startup")
 def on_startup():
-    """Auto-seed dataset and timetable if database is fresh so deployment is never empty."""
+    """Auto-seed dataset, timetable, and MongoDB collections if fresh so deployment is never empty."""
     import json
     from .database import SessionLocal
     from .models import TimetableSlot
+    
+    # Initialize MongoDB collections & spatial data
+    try:
+        init_mongodb()
+    except Exception as e:
+        print(f"[MongoDB] Startup init warning: {e}")
+
     db = SessionLocal()
     try:
         if db.query(Room).count() == 0:
@@ -108,8 +145,9 @@ def healthcheck():
     """Health check endpoint for Render, Railway, Vercel, and keep-alive pings."""
     return {
         "status": "healthy",
-        "service": "cit-scheduling-backend",
-        "institute": "Chilika Institute of Technology"
+        "service": "cit-smart-campus-ecosystem",
+        "institute": "Chilika Institute of Technology",
+        "mongodb_status": "connected" if is_mongodb_live() else "fallback_active"
     }
 
 @app.get("/")

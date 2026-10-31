@@ -11,6 +11,7 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  swcMinify: false,
   ...(isGithubPages
     ? {}
     : {
