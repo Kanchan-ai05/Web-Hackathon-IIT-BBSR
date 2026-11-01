@@ -19,6 +19,36 @@ class UserResponse(BaseModel):
     name: str
     role: str
     department: Optional[str] = None
+    is_active: Optional[bool] = True
+
+class RegisterRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    email: str = Field(..., min_length=5, max_length=100)
+    password: str = Field(..., min_length=6, max_length=100)
+    role: str = Field(default="student")
+    department: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    token: str
+    new_password: str = Field(..., min_length=6, max_length=100)
+
+class UserRoleUpdateRequest(BaseModel):
+    role: Optional[str] = None
+    department: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class FullUserResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    role: str
+    department: Optional[str] = None
+    is_active: bool = True
+    created_at: Optional[str] = None
 
 class TimetableSlotSchema(BaseModel):
     session_id: str

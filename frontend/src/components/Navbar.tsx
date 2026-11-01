@@ -5,10 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth, DEMO_ACCOUNTS } from "../context/AuthContext";
 import { useAiSettings } from "../context/AiContext";
+import AuthDrawer from "./AuthDrawer";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, quickLogin, logout, loading, apiUrl, updateApiUrl, apiStatus, apiLatency, checkHealth } = useAuth();
+  const { user, quickLogin, logout, loading, apiUrl, updateApiUrl, apiStatus, apiLatency, checkHealth, openAuthDrawer } = useAuth();
   const { apiKey, provider, isConnected, modelName, testLoading, saveSettings, testConnection, clearSettings } = useAiSettings();
 
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -291,24 +292,42 @@ export default function Navbar() {
 
               {user ? (
                 <div className="flex items-center gap-2 pl-2">
-                  <div className="text-right hidden lg:block">
+                  <button
+                    onClick={() => openAuthDrawer("login")}
+                    title="View user profile or switch accounts"
+                    className="text-right hidden lg:block hover:opacity-80 transition-opacity"
+                  >
                     <div className="text-xs font-semibold text-slate-800 leading-tight">
                       {user.name}
                     </div>
                     <div className="text-[10px] font-mono text-sky-600 uppercase">
                       {user.role.replace("_", " ")}
                     </div>
-                  </div>
+                  </button>
                   <button
                     onClick={logout}
-                    title="Sign out"
-                    className="text-xs text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded border border-rose-200 transition-colors"
+                    title="Sign out of CIT Nexus"
+                    className="text-xs text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors font-semibold"
                   >
                     Sign Out
                   </button>
                 </div>
               ) : (
-                <div className="text-xs text-slate-400">Not Logged In</div>
+                <div className="flex items-center gap-1.5 pl-2">
+                  <button
+                    onClick={() => openAuthDrawer("login")}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs shadow-sm hover:shadow transition-all"
+                  >
+                    <span>🔐</span>
+                    <span>Sign In</span>
+                  </button>
+                  <button
+                    onClick={() => openAuthDrawer("register")}
+                    className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors"
+                  >
+                    Register
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -583,6 +602,9 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Slide-In Authentication Drawer */}
+      <AuthDrawer />
     </>
   );
 }

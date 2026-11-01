@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth, DEMO_ACCOUNTS } from "../context/AuthContext";
 
 export default function Home() {
-  const { user, token, quickLogin, apiUrl, loading: authLoading } = useAuth();
+  const { user, token, quickLogin, apiUrl, loading: authLoading, openAuthDrawer } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -13,6 +13,20 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [uploadJson, setUploadJson] = useState<string>("");
   const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+
+  // Admin User Management State
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
+  const [userActionMsg, setUserActionMsg] = useState<string | null>(null);
+
+  // Faculty Schedule State
+  const [facultySlots, setFacultySlots] = useState<any[]>([]);
+  const [loadingFacultySlots, setLoadingFacultySlots] = useState<boolean>(false);
+
+  // Student Timetable State
+  const [selectedCohort, setSelectedCohort] = useState<string>("CSE-Year2-A");
+  const [studentSlots, setStudentSlots] = useState<any[]>([]);
+  const [loadingStudentSlots, setLoadingStudentSlots] = useState<boolean>(false);
 
   // Fetch stats & metadata
   const fetchStats = async () => {
@@ -24,6 +38,108 @@ export default function Home() {
       }
     } catch (e) {
       // Backend may be offline during build
+    }
+  };
+
+  // Fetch Admin Users
+  const fetchUsers = async () => {
+    if (!token || user?.role !== "admin") return;
+    setLoadingUsers(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/auth/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsersList(data);
+      }
+    } catch (e) {
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Admin Update User Role
+  const handleUpdateUserRole = async (userId: number, newRole: string) => {
+    if (!token || user?.role !== "admin") return;
+    setUserActionMsg(null);
+    setError(null);
+    try {
+      const res = await fetch(`${apiUrl}/api/auth/users/${userId}/role`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to update role");
+      setUserActionMsg(`✓ Role updated successfully to '${newRole}' for user ${data.email}`);
+      fetchUsers();
+      fetchAuditLogs();
+    } catch (err: any) {
+      setError(err.message || "Failed to update role");
+    }
+  };
+
+  // Admin Delete User Account
+  const handleDeleteUser = async (userId: number, userEmail: string) => {
+    if (!token || user?.role !== "admin") return;
+    if (!confirm(`Are you sure you want to delete user account '${userEmail}'?`)) return;
+    setUserActionMsg(null);
+    setError(null);
+    try {
+      const res = await fetch(`${apiUrl}/api/auth/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to delete user");
+      setUserActionMsg(`✓ User account '${userEmail}' deleted successfully.`);
+      fetchUsers();
+      fetchAuditLogs();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete user");
+    }
+  };
+
+  // Fetch Faculty Personal Timetable
+  const fetchFacultySchedule = async () => {
+    if (!apiUrl) return;
+    setLoadingFacultySlots(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/timetable`);
+      if (res.ok) {
+        const allSlots = await res.json();
+        // Filter slots where faculty matches current faculty user or default faculty
+        const userLast = user?.name ? user.name.split(" ").pop()?.toLowerCase() : "";
+        const matched = allSlots.filter(
+          (s: any) =>
+            (userLast && s.faculty_name?.toLowerCase().includes(userLast)) ||
+            s.faculty_id === "FAC-CS-01"
+        );
+        setFacultySlots(matched.length > 0 ? matched : allSlots.slice(0, 10));
+      }
+    } catch (e) {
+    } finally {
+      setLoadingFacultySlots(false);
+    }
+  };
+
+  // Fetch Student Cohort Schedule
+  const fetchStudentSchedule = async (cohort: string) => {
+    if (!apiUrl) return;
+    setLoadingStudentSlots(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/timetable?group_id=${cohort}`);
+      if (res.ok) {
+        const slots = await res.json();
+        setStudentSlots(slots);
+      }
+    } catch (e) {
+    } finally {
+      setLoadingStudentSlots(false);
     }
   };
 
@@ -43,6 +159,7 @@ export default function Home() {
       setMessage("✓ Demo data successfully restored to clean original CIT public state!");
       fetchStats();
       fetchAuditLogs();
+      fetchUsers();
     } catch (err: any) {
       setError(err.message || "Failed to reset demo data");
     } finally {
@@ -107,15 +224,25 @@ export default function Home() {
   useEffect(() => {
     if (user?.role === "admin" && token) {
       fetchAuditLogs();
+      fetchUsers();
     } else {
       setAuditLogs([]);
+      setUsersList([]);
     }
-  }, [user, token]);
+
+    if (user?.role === "faculty") {
+      fetchFacultySchedule();
+    }
+
+    if (user?.role === "student") {
+      fetchStudentSchedule(selectedCohort);
+    }
+  }, [user, token, apiUrl]);
 
   return (
     <main className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
       {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-sky-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <section className="bg-gradient-to-r from-sky-950 via-indigo-950 to-slate-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-white/10">
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-semibold mb-3 border border-sky-400/30">
             <span>🛡️</span> Pure Python Validator & OR-Tools CP-SAT Timetable Engine
@@ -127,30 +254,44 @@ export default function Home() {
             Advanced institutional scheduling, predictive conflict monitoring, AI copilot, and smart facility management for Chilika Institute of Technology.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {user ? (
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500/20 border border-sky-400/40 text-xs text-sky-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Signed in as <strong className="text-white font-bold">{user.name}</strong> ({user.role.replace("_", " ").toUpperCase()})</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => openAuthDrawer("login")}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-slate-950 font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2"
+              >
+                <span>🔐</span> Sign In to Access Portal
+              </button>
+            )}
+
             <Link
               href="/timetable"
-              className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
             >
-              <span>📅</span> View & Generate Timetable
+              <span>📅</span> Weekly Timetable Grid
             </Link>
             <Link
               href="/bookings"
               className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
             >
-              <span>🎫</span> Venue Bookings & AI Intake
+              <span>🎫</span> Venue Bookings
             </Link>
             <Link
-              href="/disruptions"
-              className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
+              href="/navigation"
+              className="px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
             >
-              <span>⚡</span> Disruption Rescheduler
+              <span>🧭</span> Campus Map
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Notifications */}
+      {/* Global Notifications */}
       {message && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
           <span>{message}</span>
@@ -164,6 +305,409 @@ export default function Home() {
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* ROLE-BASED DASHBOARDS                                                    */}
+      {/* ========================================================================= */}
+
+      {/* 1. ADMINISTRATOR DASHBOARD */}
+      {user?.role === "admin" && (
+        <section className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-sm space-y-6 ring-1 ring-indigo-100">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🏛️</span>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  Administrator Command Console
+                </h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                  Full Authority
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Manage campus users, permissions, timetable re-solves, dataset backups, and security audits.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors"
+              >
+                📁 Upload Dataset JSON
+              </button>
+              <button
+                onClick={handleResetData}
+                disabled={loading}
+                className="text-xs font-semibold px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg border border-rose-200 transition-colors"
+              >
+                🔄 Reset Demo Data
+              </button>
+            </div>
+          </div>
+
+          {/* User Management Action Feedback */}
+          {userActionMsg && (
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+              <span>{userActionMsg}</span>
+              <button onClick={() => setUserActionMsg(null)} className="text-emerald-700 font-bold ml-2">✕</button>
+            </div>
+          )}
+
+          {/* Admin User Management Table */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span>👥</span> Registered Institutional Users & Role Permissions
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Manage user roles, departments, and active statuses across the campus directory.
+                </p>
+              </div>
+              <button
+                onClick={fetchUsers}
+                disabled={loadingUsers}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+              >
+                {loadingUsers ? "Refreshing..." : "↻ Refresh Users"}
+              </button>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 rounded-xl max-h-80 shadow-xs">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold sticky top-0">
+                  <tr>
+                    <th className="p-3">User Name</th>
+                    <th className="p-3">Email</th>
+                    <th className="p-3">Department</th>
+                    <th className="p-3">Current Role</th>
+                    <th className="p-3">Permission Level</th>
+                    <th className="p-3 text-right">Admin Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {usersList.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-6 text-center text-slate-400">
+                        {loadingUsers ? "Loading users directory..." : "No users found in database."}
+                      </td>
+                    </tr>
+                  ) : (
+                    usersList.map((u) => {
+                      const isSelf = u.email === user?.email;
+                      return (
+                        <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3 font-semibold text-slate-900 flex items-center gap-2">
+                            <span>{u.name}</span>
+                            {isSelf && (
+                              <span className="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded">
+                                You
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 font-mono text-slate-600">{u.email}</td>
+                          <td className="p-3 text-slate-600 font-medium">{u.department || "-"}</td>
+                          <td className="p-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                                u.role === "admin"
+                                  ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                  : u.role === "faculty"
+                                  ? "bg-sky-100 text-sky-800 border border-sky-200"
+                                  : u.role === "student"
+                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                  : "bg-amber-100 text-amber-800 border border-amber-200"
+                              }`}
+                            >
+                              {u.role.replace("_", " ")}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <select
+                              value={u.role}
+                              disabled={isSelf}
+                              onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
+                              className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-slate-700 font-medium focus:bg-white focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                            >
+                              <option value="student">Student</option>
+                              <option value="faculty">Faculty</option>
+                              <option value="coordinator">Event / Club Coordinator</option>
+                              <option value="department_coordinator">Department Coordinator</option>
+                              <option value="admin">Administrator</option>
+                            </select>
+                          </td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.email)}
+                              disabled={isSelf}
+                              title={isSelf ? "Cannot delete active administrator" : "Delete account"}
+                              className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 px-2 py-1 rounded hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 2. FACULTY DASHBOARD */}
+      {user?.role === "faculty" && (
+        <section className="bg-white p-6 rounded-2xl border border-sky-200 shadow-sm space-y-6 ring-1 ring-sky-100">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">👨‍🏫</span>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  Faculty Teaching Schedule & Portal
+                </h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full">
+                  {user.department || "CSE"} Department
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Your weekly teaching sessions, classroom assignments, leave requests, and venue bookings.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/bookings"
+                className="text-xs font-semibold px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors shadow-xs"
+              >
+                + Request Venue Booking
+              </Link>
+              <Link
+                href="/conflicts"
+                className="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors"
+              >
+                ⚠️ Check Clashes
+              </Link>
+            </div>
+          </div>
+
+          {/* Teaching Schedule Grid */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-slate-800">
+                Assigned Teaching Sessions (Weekly Timetable)
+              </h3>
+              <span className="text-xs text-slate-500 font-mono">
+                {facultySlots.length} Sessions Allocated
+              </span>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+                  <tr>
+                    <th className="p-3">Day</th>
+                    <th className="p-3">Period</th>
+                    <th className="p-3">Course</th>
+                    <th className="p-3">Session Type</th>
+                    <th className="p-3">Student Cohort</th>
+                    <th className="p-3">Allocated Venue</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {facultySlots.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-6 text-center text-slate-400">
+                        {loadingFacultySlots ? "Loading your timetable..." : "No sessions found for this faculty member."}
+                      </td>
+                    </tr>
+                  ) : (
+                    facultySlots.map((s, idx) => (
+                      <tr key={idx} className="hover:bg-sky-50/40">
+                        <td className="p-3 font-bold text-sky-800">{s.day}</td>
+                        <td className="p-3 font-mono text-slate-700 font-semibold">
+                          Period {s.start_period} {s.duration > 1 && `(2h)`}
+                        </td>
+                        <td className="p-3 font-semibold text-slate-900">{s.course_title} ({s.course_id})</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${s.kind === "lab" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}`}>
+                            {s.kind}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-600 font-mono text-[11px]">{Array.isArray(s.groups) ? s.groups.join(", ") : s.groups}</td>
+                        <td className="p-3 font-bold text-emerald-700">{s.room_name || s.room_id}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3. STUDENT DASHBOARD */}
+      {user?.role === "student" && (
+        <section className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm space-y-6 ring-1 ring-emerald-100">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎓</span>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  Student Academic Portal
+                </h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                  Enrolled Student
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                View your class schedule, find classrooms with ADA accessible routes, and check in to lectures.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/checkin"
+                className="text-xs font-semibold px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors shadow-xs flex items-center gap-1.5"
+              >
+                <span>📱</span> QR Lecture Check-In
+              </Link>
+              <Link
+                href="/navigation"
+                className="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5"
+              >
+                <span>🧭</span> Room Locator
+              </Link>
+            </div>
+          </div>
+
+          {/* Cohort Selector & Timetable */}
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-slate-800">
+                Weekly Class Schedule
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500">Student Group:</span>
+                <select
+                  value={selectedCohort}
+                  onChange={(e) => {
+                    setSelectedCohort(e.target.value);
+                    fetchStudentSchedule(e.target.value);
+                  }}
+                  className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 font-bold focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="CSE-Year2-A">CSE Year 2 (Sec A)</option>
+                  <option value="CSE-Year2-B">CSE Year 2 (Sec B)</option>
+                  <option value="CSE-Year3-A">CSE Year 3 (Sec A)</option>
+                  <option value="ECE-Year2-A">ECE Year 2 (Sec A)</option>
+                  <option value="MECH-Year2-A">MECH Year 2 (Sec A)</option>
+                  <option value="CIVIL-Year2-A">CIVIL Year 2 (Sec A)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+                  <tr>
+                    <th className="p-3">Day</th>
+                    <th className="p-3">Period</th>
+                    <th className="p-3">Subject / Course</th>
+                    <th className="p-3">Instructor</th>
+                    <th className="p-3">Venue</th>
+                    <th className="p-3 text-right">Navigation</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {studentSlots.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-6 text-center text-slate-400">
+                        {loadingStudentSlots ? "Loading cohort schedule..." : "No classes scheduled for this cohort."}
+                      </td>
+                    </tr>
+                  ) : (
+                    studentSlots.map((s, idx) => (
+                      <tr key={idx} className="hover:bg-emerald-50/40">
+                        <td className="p-3 font-bold text-emerald-800">{s.day}</td>
+                        <td className="p-3 font-mono text-slate-700 font-semibold">Period {s.start_period}</td>
+                        <td className="p-3 font-semibold text-slate-900">{s.course_title}</td>
+                        <td className="p-3 text-slate-600">{s.faculty_name}</td>
+                        <td className="p-3 font-bold text-sky-700">{s.room_name || s.room_id}</td>
+                        <td className="p-3 text-right">
+                          <Link
+                            href={`/navigation?search=${s.room_id}`}
+                            className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800"
+                          >
+                            Find Room →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 4. EVENT / CLUB COORDINATOR DASHBOARD */}
+      {(user?.role === "club" || user?.role === "coordinator" || user?.role === "department_coordinator") && (
+        <section className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-6 ring-1 ring-amber-100">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎪</span>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  Event & Club Coordinator Workspace
+                </h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                  Spectra & Campus Events
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Request auditoriums, seminar halls, check quota allocations, and manage stage equipment.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/bookings"
+                className="text-xs font-semibold px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors shadow-xs flex items-center gap-1.5"
+              >
+                <span>🎫</span> New Venue Booking
+              </Link>
+              <Link
+                href="/equipment"
+                className="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5"
+              >
+                <span>🔬</span> AV & Stage Gear
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200">
+              <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">Weekly Quota</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">2 Events / Week</div>
+              <p className="text-[11px] text-slate-500 mt-1">Auditoriums and seminar halls quota allocation.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-sky-50/60 border border-sky-200">
+              <div className="text-xs font-bold text-sky-800 uppercase tracking-wider">Priority Level</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">Tier 6 (Club Event)</div>
+              <p className="text-[11px] text-slate-500 mt-1">Evaluated after academic sessions and exams.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200">
+              <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Spectra Fest</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">22 Approved</div>
+              <p className="text-[11px] text-slate-500 mt-1">Zero timetable overlap guaranteed by validator.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 1-Click Role Switcher */}
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -172,7 +716,7 @@ export default function Home() {
               Demo Role Selector
             </h2>
             <p className="text-xs text-slate-500">
-              Instant login into any of the 4 institutional stakeholder roles
+              Instant login into any of the institutional stakeholder roles
             </p>
           </div>
           <div className="text-xs text-slate-500 font-mono">
@@ -180,13 +724,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {DEMO_ACCOUNTS.map((acc) => {
             const isActive = user?.email === acc.email;
             return (
               <div
                 key={acc.email}
-                className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between ${
                   isActive
                     ? "bg-sky-50/80 border-sky-400 shadow-sm ring-2 ring-sky-400"
                     : "bg-white border-slate-200 hover:border-slate-300 shadow-xs"
@@ -198,27 +742,27 @@ export default function Home() {
                       {acc.role.replace("_", " ")}
                     </span>
                     {isActive && (
-                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
                         Active
                       </span>
                     )}
                   </div>
-                  <div className="font-bold text-slate-900 text-sm mt-2">{acc.name}</div>
-                  <div className="text-xs text-slate-500 mt-1">{acc.desc}</div>
+                  <div className="font-bold text-slate-900 text-xs mt-2 leading-tight">{acc.name}</div>
+                  <div className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">{acc.desc}</div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-slate-400">{acc.email}</span>
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-slate-400 truncate max-w-[120px]">{acc.email}</span>
                   <button
                     disabled={authLoading}
                     onClick={() => quickLogin(acc.role)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
                       isActive
                         ? "bg-sky-600 text-white"
                         : "bg-slate-100 hover:bg-slate-200 text-slate-800"
                     }`}
                   >
-                    {isActive ? "Logged In" : "Switch"}
+                    {isActive ? "Active" : "Switch"}
                   </button>
                 </div>
               </div>
@@ -238,24 +782,6 @@ export default function Home() {
               Loaded from <code className="text-sky-700 font-mono">cit_public.json</code> & verified by <code className="text-sky-700 font-mono">validator.py</code>
             </p>
           </div>
-
-          {user?.role === "admin" && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors"
-              >
-                📁 Upload Dataset JSON
-              </button>
-              <button
-                onClick={handleResetData}
-                disabled={loading}
-                className="text-xs font-semibold px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg border border-rose-200 transition-colors"
-              >
-                🔄 Reset Clean Data
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -423,7 +949,7 @@ export default function Home() {
                 <span>🛡️</span> Institutional Security & Audit Trail (Admin Only)
               </h2>
               <p className="text-xs text-slate-500">
-                Immutable log of all schedule changes, dataset uploads, and venue approvals
+                Immutable log of all user registrations, role changes, schedule generation, and venue approvals
               </p>
             </div>
             <button
@@ -450,7 +976,7 @@ export default function Home() {
                 {auditLogs.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-slate-400">
-                      No audit events logged yet. Perform an action like schedule generation or booking.
+                      No audit events logged yet.
                     </td>
                   </tr>
                 ) : (

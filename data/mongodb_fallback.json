@@ -1,0 +1,615 @@
+{
+  "cit_campus_navigation": [
+    {
+      "type": "campus_metadata",
+      "institute": "Chilika Institute of Technology",
+      "buildings": [
+        {
+          "building_id": "MAIN-ACADEMIC",
+          "name": "Main Academic Complex",
+          "code": "MAC",
+          "floors": 4,
+          "has_elevator": true,
+          "accessible_ramps": true,
+          "coordinates": {
+            "lat": 20.1485,
+            "lng": 85.671
+          },
+          "departments": [
+            "CSE",
+            "ECE",
+            "Dean's Office"
+          ]
+        },
+        {
+          "building_id": "COMPUTING-SCIENCE",
+          "name": "Computing & Sciences Block",
+          "code": "CSB",
+          "floors": 3,
+          "has_elevator": true,
+          "accessible_ramps": true,
+          "coordinates": {
+            "lat": 20.1492,
+            "lng": 85.6718
+          },
+          "departments": [
+            "CSE",
+            "Physics",
+            "Chemistry"
+          ]
+        },
+        {
+          "building_id": "AUDITORIUM-COMPLEX",
+          "name": "Central Auditorium & Convention Center",
+          "code": "AUD",
+          "floors": 2,
+          "has_elevator": true,
+          "accessible_ramps": true,
+          "coordinates": {
+            "lat": 20.1478,
+            "lng": 85.6702
+          },
+          "departments": [
+            "Institute Administration",
+            "Cultural Affairs"
+          ]
+        },
+        {
+          "building_id": "INNOVATION-WORKSHOPS",
+          "name": "Innovation & Mechanical Workshop Block",
+          "code": "IMW",
+          "floors": 2,
+          "has_elevator": false,
+          "accessible_ramps": true,
+          "coordinates": {
+            "lat": 20.1472,
+            "lng": 85.6725
+          },
+          "departments": [
+            "Mechanical Engineering",
+            "Civil Engineering"
+          ]
+        }
+      ],
+      "rooms": [
+        {
+          "room_id": "LH-1",
+          "name": "Lecture Hall 1",
+          "building": "MAIN-ACADEMIC",
+          "floor": 1,
+          "wing": "East",
+          "accessible": true,
+          "type": "lecture_hall",
+          "capacity": 120,
+          "x": 120,
+          "y": 80
+        },
+        {
+          "room_id": "LH-2",
+          "name": "Lecture Hall 2",
+          "building": "MAIN-ACADEMIC",
+          "floor": 1,
+          "wing": "West",
+          "accessible": true,
+          "type": "lecture_hall",
+          "capacity": 120,
+          "x": 280,
+          "y": 80
+        },
+        {
+          "room_id": "LH-3",
+          "name": "Lecture Hall 3",
+          "building": "MAIN-ACADEMIC",
+          "floor": 2,
+          "wing": "East",
+          "accessible": true,
+          "type": "lecture_hall",
+          "capacity": 100,
+          "x": 120,
+          "y": 180
+        },
+        {
+          "room_id": "LH-4",
+          "name": "Lecture Hall 4",
+          "building": "MAIN-ACADEMIC",
+          "floor": 2,
+          "wing": "West",
+          "accessible": true,
+          "type": "lecture_hall",
+          "capacity": 100,
+          "x": 280,
+          "y": 180
+        },
+        {
+          "room_id": "CR-01",
+          "name": "Classroom 101",
+          "building": "MAIN-ACADEMIC",
+          "floor": 1,
+          "wing": "Central",
+          "accessible": true,
+          "type": "classroom",
+          "capacity": 60,
+          "x": 200,
+          "y": 80
+        },
+        {
+          "room_id": "CR-02",
+          "name": "Classroom 102",
+          "building": "MAIN-ACADEMIC",
+          "floor": 1,
+          "wing": "Central",
+          "accessible": true,
+          "type": "classroom",
+          "capacity": 60,
+          "x": 200,
+          "y": 130
+        },
+        {
+          "room_id": "CR-03",
+          "name": "Classroom 201",
+          "building": "MAIN-ACADEMIC",
+          "floor": 2,
+          "wing": "Central",
+          "accessible": true,
+          "type": "classroom",
+          "capacity": 60,
+          "x": 200,
+          "y": 180
+        },
+        {
+          "room_id": "CR-04",
+          "name": "Classroom 202",
+          "building": "MAIN-ACADEMIC",
+          "floor": 2,
+          "wing": "Central",
+          "accessible": true,
+          "type": "classroom",
+          "capacity": 60,
+          "x": 200,
+          "y": 230
+        },
+        {
+          "room_id": "CR-05",
+          "name": "Classroom 301",
+          "building": "MAIN-ACADEMIC",
+          "floor": 3,
+          "wing": "East",
+          "accessible": true,
+          "type": "classroom",
+          "capacity": 50,
+          "x": 120,
+          "y": 280
+        },
+        {
+          "room_id": "CR-06",
+          "name": "Classroom 302",
+          "building": "MAIN-ACADEMIC",
+          "floor": 3,
+          "wing": "West",
+          "accessible": false,
+          "type": "classroom",
+          "capacity": 50,
+          "x": 280,
+          "y": 280
+        },
+        {
+          "room_id": "CS-LAB-1",
+          "name": "Computer Science Lab 1",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 1,
+          "wing": "North",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 45,
+          "x": 100,
+          "y": 100
+        },
+        {
+          "room_id": "CS-LAB-2",
+          "name": "Computer Science Lab 2",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 1,
+          "wing": "South",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 45,
+          "x": 250,
+          "y": 100
+        },
+        {
+          "room_id": "AI-LAB",
+          "name": "Artificial Intelligence & HPC Lab",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 2,
+          "wing": "North",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 40,
+          "x": 100,
+          "y": 200
+        },
+        {
+          "room_id": "HARDWARE-LAB",
+          "name": "Hardware & Embedded Systems Lab",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 2,
+          "wing": "South",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 40,
+          "x": 250,
+          "y": 200
+        },
+        {
+          "room_id": "ELECTRONICS-LAB",
+          "name": "Electronics & VLSI Lab",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 2,
+          "wing": "Central",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 40,
+          "x": 180,
+          "y": 200
+        },
+        {
+          "room_id": "PHYSICS-LAB",
+          "name": "Engineering Physics Lab",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 3,
+          "wing": "East",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 40,
+          "x": 100,
+          "y": 300
+        },
+        {
+          "room_id": "CHEMISTRY-LAB",
+          "name": "Engineering Chemistry Lab",
+          "building": "COMPUTING-SCIENCE",
+          "floor": 3,
+          "wing": "West",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 40,
+          "x": 250,
+          "y": 300
+        },
+        {
+          "room_id": "AUDITORIUM",
+          "name": "Main Institute Auditorium",
+          "building": "AUDITORIUM-COMPLEX",
+          "floor": 1,
+          "wing": "Ground",
+          "accessible": true,
+          "type": "auditorium",
+          "capacity": 400,
+          "x": 150,
+          "y": 120
+        },
+        {
+          "room_id": "SEMINAR-HALL-1",
+          "name": "Seminar Hall 1",
+          "building": "AUDITORIUM-COMPLEX",
+          "floor": 1,
+          "wing": "East",
+          "accessible": true,
+          "type": "seminar_hall",
+          "capacity": 90,
+          "x": 80,
+          "y": 220
+        },
+        {
+          "room_id": "SEMINAR-HALL-2",
+          "name": "Seminar Hall 2",
+          "building": "AUDITORIUM-COMPLEX",
+          "floor": 2,
+          "wing": "West",
+          "accessible": true,
+          "type": "seminar_hall",
+          "capacity": 90,
+          "x": 220,
+          "y": 220
+        },
+        {
+          "room_id": "MULTIPURPOSE-HALL",
+          "name": "Multipurpose Hall",
+          "building": "AUDITORIUM-COMPLEX",
+          "floor": 2,
+          "wing": "North",
+          "accessible": true,
+          "type": "multipurpose",
+          "capacity": 150,
+          "x": 150,
+          "y": 280
+        },
+        {
+          "room_id": "PROJECT-LAB-1",
+          "name": "Capstone Project Lab 1",
+          "building": "INNOVATION-WORKSHOPS",
+          "floor": 1,
+          "wing": "East",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 35,
+          "x": 100,
+          "y": 90
+        },
+        {
+          "room_id": "PROJECT-LAB-2",
+          "name": "Capstone Project Lab 2",
+          "building": "INNOVATION-WORKSHOPS",
+          "floor": 1,
+          "wing": "West",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 35,
+          "x": 240,
+          "y": 90
+        },
+        {
+          "room_id": "MECH-WORKSHOP",
+          "name": "Central Mechanical Workshop",
+          "building": "INNOVATION-WORKSHOPS",
+          "floor": 1,
+          "wing": "Heavy Machinery",
+          "accessible": true,
+          "type": "lab",
+          "capacity": 60,
+          "x": 170,
+          "y": 180
+        },
+        {
+          "room_id": "CAD-CAM-LAB",
+          "name": "CAD / CAM Simulation Lab",
+          "building": "INNOVATION-WORKSHOPS",
+          "floor": 2,
+          "wing": "Design",
+          "accessible": false,
+          "type": "lab",
+          "capacity": 40,
+          "x": 170,
+          "y": 260
+        },
+        {
+          "room_id": "CONFERENCE-ROOM",
+          "name": "Executive Conference Room",
+          "building": "MAIN-ACADEMIC",
+          "floor": 1,
+          "wing": "Admin",
+          "accessible": true,
+          "type": "seminar_hall",
+          "capacity": 30,
+          "x": 80,
+          "y": 50
+        },
+        {
+          "room_id": "R01",
+          "name": "Multipurpose Room R01",
+          "building": "MAIN-ACADEMIC",
+          "floor": 1,
+          "wing": "Ground",
+          "accessible": true,
+          "type": "classroom",
+          "capacity": 80,
+          "x": 220,
+          "y": 50
+        }
+      ],
+      "updated_at": "2026-11-01T02:33:01.040199",
+      "_id": "cit_campus_navigation_1793500381040_0"
+    }
+  ],
+  "cit_equipment_inventory": [
+    {
+      "equipment_id": "EQ-GPU-01",
+      "name": "NVIDIA A100 80GB Tensor Core Server",
+      "room_id": "AI-LAB",
+      "status": "available",
+      "category": "Computing",
+      "calibration_date": "2026-09-15",
+      "_id": "cit_equipment_inventory_1793500381045_0_0"
+    },
+    {
+      "equipment_id": "EQ-GPU-02",
+      "name": "NVIDIA RTX 4090 Workstation Rig",
+      "room_id": "AI-LAB",
+      "status": "available",
+      "category": "Computing",
+      "calibration_date": "2026-09-15",
+      "_id": "cit_equipment_inventory_1793500381045_1_1"
+    },
+    {
+      "equipment_id": "EQ-3DP-01",
+      "name": "Industrial Dual-Extruder 3D Printer",
+      "room_id": "PROJECT-LAB-1",
+      "status": "available",
+      "category": "Prototyping",
+      "calibration_date": "2026-08-20",
+      "_id": "cit_equipment_inventory_1793500381045_2_2"
+    },
+    {
+      "equipment_id": "EQ-CNC-01",
+      "name": "HAAS 3-Axis CNC Vertical Milling Machine",
+      "room_id": "MECH-WORKSHOP",
+      "status": "available",
+      "category": "Heavy Machinery",
+      "calibration_date": "2026-07-10",
+      "_id": "cit_equipment_inventory_1793500381045_3_3"
+    },
+    {
+      "equipment_id": "EQ-OSC-01",
+      "name": "Keysight 4-Channel 1GHz Digital Oscilloscope",
+      "room_id": "ELECTRONICS-LAB",
+      "status": "available",
+      "category": "Testing",
+      "calibration_date": "2026-10-01",
+      "_id": "cit_equipment_inventory_1793500381045_4_4"
+    },
+    {
+      "equipment_id": "EQ-OSC-02",
+      "name": "Tektronix Mixed Domain Oscilloscope",
+      "room_id": "HARDWARE-LAB",
+      "status": "available",
+      "category": "Testing",
+      "calibration_date": "2026-10-01",
+      "_id": "cit_equipment_inventory_1793500381045_5_5"
+    },
+    {
+      "equipment_id": "EQ-SPEC-01",
+      "name": "UV-Visible Double Beam Spectrophotometer",
+      "room_id": "CHEMISTRY-LAB",
+      "status": "available",
+      "category": "Chemical Analysis",
+      "calibration_date": "2026-09-01",
+      "_id": "cit_equipment_inventory_1793500381045_6_6"
+    },
+    {
+      "equipment_id": "EQ-OPT-01",
+      "name": "He-Ne Laser Optics Interferometer Bench",
+      "room_id": "PHYSICS-LAB",
+      "status": "available",
+      "category": "Optics",
+      "calibration_date": "2026-08-15",
+      "_id": "cit_equipment_inventory_1793500381045_7_7"
+    },
+    {
+      "equipment_id": "EQ-SVR-01",
+      "name": "Cisco Catalyst 48-Port Managed Switch Rack",
+      "room_id": "CS-LAB-1",
+      "status": "available",
+      "category": "Networking",
+      "calibration_date": "2026-09-20",
+      "_id": "cit_equipment_inventory_1793500381045_8_8"
+    },
+    {
+      "equipment_id": "EQ-PROJ-01",
+      "name": "Sony 4K Laser High-Lumen Stage Projector",
+      "room_id": "AUDITORIUM",
+      "status": "available",
+      "category": "Audio-Visual",
+      "calibration_date": "2026-10-10",
+      "_id": "cit_equipment_inventory_1793500381045_9_9"
+    }
+  ],
+  "cit_academic_calendar": [
+    {
+      "id": "CAL-01",
+      "title": "Autumn Semester Instruction Commences",
+      "category": "academic",
+      "date": "2026-08-03",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_0_0"
+    },
+    {
+      "id": "CAL-02",
+      "title": "Independence Day Holiday",
+      "category": "holiday",
+      "date": "2026-08-15",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_1_1"
+    },
+    {
+      "id": "CAL-03",
+      "title": "Midsem Examinations (Week 8)",
+      "category": "examination",
+      "date": "2026-09-21",
+      "end_date": "2026-09-26",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_2_2"
+    },
+    {
+      "id": "CAL-04",
+      "title": "Gandhi Jayanti Holiday",
+      "category": "holiday",
+      "date": "2026-10-02",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_3_3"
+    },
+    {
+      "id": "CAL-05",
+      "title": "Spectra Annual Techno-Cultural Fest",
+      "category": "event",
+      "date": "2026-10-14",
+      "end_date": "2026-10-17",
+      "department": "Student Affairs",
+      "mandatory": false,
+      "_id": "cit_academic_calendar_1793500381048_4_4"
+    },
+    {
+      "id": "CAL-06",
+      "title": "Diwali Vacation Break",
+      "category": "holiday",
+      "date": "2026-11-01",
+      "end_date": "2026-11-05",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_5_5"
+    },
+    {
+      "id": "CAL-07",
+      "title": "End-Semester Laboratory Examinations",
+      "category": "examination",
+      "date": "2026-11-16",
+      "end_date": "2026-11-21",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_6_6"
+    },
+    {
+      "id": "CAL-08",
+      "title": "End-Semester Theory Examinations",
+      "category": "examination",
+      "date": "2026-11-23",
+      "end_date": "2026-12-05",
+      "department": "All",
+      "mandatory": true,
+      "_id": "cit_academic_calendar_1793500381048_7_7"
+    }
+  ],
+  "cit_green_analytics": [
+    {
+      "type": "room_energy_coefficients",
+      "ratings": {
+        "lecture_hall": {
+          "hvac_kw": 8.0,
+          "lighting_kw": 1.2,
+          "av_kw": 0.8
+        },
+        "classroom": {
+          "hvac_kw": 4.5,
+          "lighting_kw": 0.6,
+          "av_kw": 0.4
+        },
+        "lab": {
+          "hvac_kw": 10.0,
+          "lighting_kw": 1.5,
+          "equipment_kw": 6.0
+        },
+        "auditorium": {
+          "hvac_kw": 25.0,
+          "lighting_kw": 4.0,
+          "av_kw": 3.5
+        },
+        "seminar_hall": {
+          "hvac_kw": 6.5,
+          "lighting_kw": 1.0,
+          "av_kw": 1.2
+        },
+        "multipurpose": {
+          "hvac_kw": 12.0,
+          "lighting_kw": 2.0,
+          "av_kw": 1.5
+        }
+      },
+      "kwh_rate_inr": 8.5,
+      "kg_co2_per_kwh": 0.82,
+      "_id": "cit_green_analytics_1793500381048_0"
+    }
+  ]
+}

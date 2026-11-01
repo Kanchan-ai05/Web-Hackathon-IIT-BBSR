@@ -157,15 +157,28 @@ Institutional tamper-evident audit trail.
 | `details` | TEXT | NOT NULL | Event summary / payload |
 
 ### 2.11 Table: `users`
-Authenticated user accounts.
+Authenticated institutional user accounts with role permissions.
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | User ID |
-| `email` | VARCHAR(100) | UNIQUE, NOT NULL | Account email (login username) |
-| `hashed_password` | VARCHAR(255) | NOT NULL | bcrypt salted hash |
+| `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | Unique user ID |
+| `email` | VARCHAR(100) | UNIQUE, NOT NULL, INDEXED | Account email (login username) |
+| `hashed_password` | VARCHAR(255) | NOT NULL | Bcrypt salted and hashed password (never plaintext) |
 | `name` | VARCHAR(100) | NOT NULL | User display name |
-| `role` | VARCHAR(50) | NOT NULL | `admin`, `department_coordinator`, `faculty`, `club` |
-| `department` | VARCHAR(50) | NOT NULL | Assigned department |
+| `role` | VARCHAR(50) | NOT NULL | Role: `admin`, `faculty`, `student`, `coordinator`, `department_coordinator`, `club` |
+| `department` | VARCHAR(50) | NULL | Assigned department (e.g. `CSE`, `ECE`, `MECH`, `ADMIN`) |
+| `created_at` | DATETIME | DEFAULT UTC NOW | Account creation timestamp |
+| `is_active` | BOOLEAN | DEFAULT TRUE | Account active/deactivated status |
+
+### 2.12 Table: `password_reset_tokens`
+Cryptographically secure temporary tokens for password recovery.
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | Token entry ID |
+| `email` | VARCHAR(100) | NOT NULL, INDEXED | Associated user account email |
+| `token` | VARCHAR(100) | UNIQUE, NOT NULL, INDEXED | 32-character hexadecimal secure token |
+| `expires_at` | DATETIME | NOT NULL | Expiration timestamp (30-minute validity) |
+| `used` | BOOLEAN | DEFAULT FALSE | One-time usage flag |
+| `created_at` | DATETIME | DEFAULT UTC NOW | Issuance timestamp |
 
 ---
 

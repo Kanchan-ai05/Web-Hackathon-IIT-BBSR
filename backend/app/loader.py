@@ -54,6 +54,13 @@ DEMO_ACCOUNTS = [
         "role": "club",
         "department": None,
         "password": "Club@123"
+    },
+    {
+        "email": "student@cit.edu",
+        "name": "Aarav Sharma (Student)",
+        "role": "student",
+        "department": "CSE",
+        "password": "Student@123"
     }
 ]
 

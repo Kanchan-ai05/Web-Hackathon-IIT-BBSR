@@ -159,13 +159,52 @@ The backend is built with **FastAPI** (Python 3.10+), organized into 19 modular 
 
 ---
 
-## 7. Security, Authentication & RBAC
+## 7. Security, Authentication & Role-Based Access Control (RBAC)
 
-1. **Password Encryption**: All passwords stored using bcrypt with cryptographic salt.
-2. **Session Security**: Stateless JWT tokens carrying user email and role claims, signed via HMAC-SHA256 (`SECRET_KEY`).
-3. **Role-Based Access Control**:
-   - `admin`: Full administrative access (solve timetable, approve disruptions, lock down buildings, reset data).
-   - `department_coordinator`: Move classes, approve department bookings, view audit logs.
-   - `faculty`: View teaching workload, request guest lectures, reserve lab apparatus, QR check-in.
-   - `club`: Submit club booking requests and event proposals.
-4. **Anti-Bypass Guard**: The AI parsing engine cannot elevate roles; all parsed requests are locked to the authenticated token's role cap.
+```
++-----------------------------------------------------------------------------------------+
+|                                CIT NEXUS AUTHENTICATION FLOW                            |
++-----------------------------------------------------------------------------------------+
+|                                                                                         |
+|   Client Frontend (Next.js)                                                             |
+|         |                                                                               |
+|         +---> [Slide-In AuthDrawer] (Sign In / Register / Password Recovery)            |
+|         |           |                                                                   |
+|         |           v                                                                   |
+|         |     POST /api/auth/register (Enforces non-admin role restriction)             |
+|         |     POST /api/auth/login    (Bcrypt verification)                             |
+|         |           |                                                                   |
+|         |           v                                                                   |
+|         |     Issues Signed JWT Bearer Token (24h expiry, email + role claims)          |
+|         |                                                                               |
+|         v                                                                               |
+|   Protected API Requests (`Authorization: Bearer <token>`)                              |
+|         |                                                                               |
+|         v                                                                               |
+|   [FastAPI RBAC Middleware: `require_role([...])`]                                      |
+|         |                                                                               |
+|   +-----+---------------------------------------------------------------+               |
+|   |                                                                     |               |
+|   |-- Admin: Full campus management, timetable solves, user directory   |               |
+|   |-- Faculty: Personal teaching schedule, venue booking fast-track     |               |
+|   |-- Student: Cohort timetable, room locator, QR lecture check-in      |               |
+|   |-- Coordinator: Venue requests, quota meter, campus events hub       |               |
+|   |                                                                     |               |
+|   +---------------------------------------------------------------------+               |
+|         |                                                                               |
+|         v                                                                               |
+|   [Immutable Security Audit Log: `AuditLog` table] (Record login, role updates, etc.)  |
+|                                                                                         |
++-----------------------------------------------------------------------------------------+
+```
+
+1. **Password Encryption & Storage**: All passwords hashed using Bcrypt with cryptographic salting via `passlib[bcrypt]`. Passwords are never stored in plaintext or logged.
+2. **Session Security & Stateless JWT**: Stateless JSON Web Tokens carrying `sub` (email), `role`, `name`, and `exp` claims signed via HMAC-SHA256 (`JWT_SECRET`). 24-hour expiration (`ACCESS_TOKEN_EXPIRE_MINUTES = 1440`).
+3. **Anti-Privilege Escalation Safeguard**: Public registration endpoints strictly forbid self-assigning the `admin` role (`HTTP 403 Forbidden`). Only authenticated Administrators can manage role permissions and promote users via `PATCH /api/auth/users/{user_id}/role`.
+4. **Password Recovery Workflow**: Secure 32-character hexadecimal reset tokens with 30-minute expiration persisted in SQLite `password_reset_tokens` table.
+5. **Role-Based Access Control (RBAC)**:
+   - `admin`: Complete campus control, solve timetable, approve disruptions, lock down buildings, manage registered users and permissions.
+   - `faculty`: View personal teaching schedule, request guest lectures, reserve lab apparatus, report maintenance defects.
+   - `student`: View cohort class schedules, room locator with accessible routing, lecture QR check-in, exam dates.
+   - `coordinator` / `club`: Submit auditorium/seminar hall booking requests, track weekly quota limits, event proposals.
+6. **Immutable Audit Trail**: Security actions (`USER_LOGIN`, `USER_REGISTER`, `PASSWORD_RESET_REQUESTED`, `USER_ROLE_UPDATED`, `USER_DELETED`, `USER_LOGOUT`) are permanently committed to the `audit_logs` table.

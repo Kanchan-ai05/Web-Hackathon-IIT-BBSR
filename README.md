@@ -110,14 +110,47 @@ An advanced, intelligent institutional management and scheduling ecosystem engin
 
 ## 👥 Demo Accounts (Pre-Seeded)
 
-The platform includes 4 pre-seeded role accounts accessible via the 1-click role switcher in the UI:
+The platform includes 5 pre-seeded role accounts accessible via the 1-click role switcher in the UI or direct login:
 
-| Role | Email | Password | Permissions |
+| Role | Email | Password | Permissions & Dashboard Experience |
 |---|---|---|---|
-| **Dean's Office (Admin)** | `admin@cit.edu` | `Admin@123` | Full access: generate timetable, approve disruptions, lock down buildings, reset data, upload datasets. |
-| **Dept Coordinator (CSE)** | `coordinator@cit.edu` | `Coord@123` | Approve department bookings & events, move classes with validator check, view audit logs. |
-| **Dr. Rohit Sahoo (Faculty)** | `faculty@cit.edu` | `Faculty@123` | Request guest lectures, view teaching workload, reserve lab apparatus, QR check-in. |
-| **Spectra Tech Fest (Club Rep)**| `club@cit.edu` | `Club@123` | Request club events, propose hackathons, view venue recommendations. |
+| **Dean's Office (Admin)** | `admin@cit.edu` | `Admin@123` | Full access: generate timetable, approve disruptions, lock down buildings, reset data, upload datasets, and **Interactive User & Role Management**. |
+| **Dept Coordinator (CSE)** | `coordinator@cit.edu` | `Coord@123` | Approve department bookings & events, move classes with validator check, view audit logs, manage 2 bookings/week quotas. |
+| **Dr. Rohit Sahoo (Faculty)** | `faculty@cit.edu` | `Faculty@123` | Personal teaching schedule filtered from timetable, quick venue booking shortcut, conflict checks, reserve lab apparatus, QR check-in. |
+| **Aarav Sharma (Student)** | `student@cit.edu` | `Student@123` | Cohort class timetable view with live section selector (`CSE-Year2-A`, etc.), room locator shortcut, QR lecture check-in, announcements. |
+| **Spectra Tech Fest (Club Rep)**| `club@cit.edu` | `Club@123` | Venue booking manager, weekly quota tracker (2 bookings/week limit), event management, equipment checkout. |
+
+---
+
+## 🔐 Complete Authentication System & RBAC
+
+The platform includes an enterprise-grade authentication system built into both frontend and backend:
+
+### 1. Slide-in Login Side Panel (`AuthDrawer`)
+- **Prominent Navbar Access**: A high-visibility `Sign In` / `Register` button in the navigation bar triggers the side panel.
+- **Sleek Slide-in Animation**: Smooth CSS slide-in transition from the right edge with backdrop blur, accessible close button, and `Esc` key listener.
+- **Mobile & Desktop Responsive**: Adapts seamlessly to all viewport widths with responsive padding and intuitive touch controls.
+
+### 2. Multi-Mode Auth Interface
+- **Sign In Tab**: Email and password fields with a show/hide password toggle, `Remember Me` checkbox (toggles between `localStorage` for 24h persistent sessions and `sessionStorage` for tab-scoped sessions), and 1-click instant demo account logins.
+- **Create Account Tab**: Real-time password confirmation validation, user role selector (`Student`, `Faculty`, `Event / Club Coordinator`), and clear inline notices explaining that Administrator accounts cannot be self-registered.
+- **Forgot Password Recovery**: Instant recovery token generator supporting secure 30-minute password reset workflows.
+- **Inline Alert Feedback**: Distinct, animated feedback alerts for success notifications, validation errors, and authentication failures.
+
+### 3. Anti-Privilege Escalation & Server-Side Security
+- **Strict Role Boundaries**: The registration endpoint (`POST /api/auth/register`) strictly prohibits self-assigning the `admin` role, returning `403 Forbidden` if attempted.
+- **Bcrypt Hashing**: All passwords are cryptographically salted and hashed using Bcrypt before storage in SQLite (`users` table).
+- **JWT Bearer Authentication**: 24-hour expiration tokens signed with secret key encoding `sub` (email), `role`, `user_id`, and `name`.
+- **Role-Based Access Control (RBAC)**: Backend endpoints protected by FastAPI dependency `require_role([...])`.
+- **Audit Logging**: Every login, logout, registration, and role change event is recorded in the immutable `audit_logs` table.
+
+### 4. Dynamic Role-Based Dashboards
+After authentication, the homepage dynamically adapts into a specialized workspace tailored to the user's role:
+- **Administrator Dashboard**: System status indicators, timetable generation triggers, dataset uploader/reset, disruption approval alerts, and the **User & Role Management Table** allowing administrators to promote, demote, or delete user accounts with live updates.
+- **Faculty Dashboard**: Filtered weekly teaching timetable displaying exact room allocations, timeslots, and student counts for Dr. Rohit Sahoo, plus quick shortcuts to request venue bookings and check conflicts.
+- **Student Dashboard**: Live cohort timetable viewer with a section dropdown selector (`CSE-Year2-A`, `CSE-Year2-B`, `ECE-Year3-A`, etc.), room navigation locator, QR lecture check-in, and department announcements.
+- **Event / Club Coordinator Dashboard**: Venue booking manager with real-time weekly quota progress bar (tracking the institutional 2 bookings/week cap), booking status tracker, and equipment checkout shortcuts.
+- **Guest Dashboard**: For unauthenticated visitors, presents an introduction, 10 ecosystem module highlights, and a quick-start demo account switcher.
 
 ---
 
@@ -167,11 +200,12 @@ By default, the platform connects to `mongodb://localhost:27017/cit_smart_campus
 
 ## 🧪 Testing & Verification
 
-### Run Full Pytest Suite (91 Tests)
+### Run Full Pytest Suite (103 Tests)
 ```powershell
-pytest backend/tests/ -v
+python -m pytest backend/tests/ -v
 ```
-All **91 tests pass with 100% green status**, covering:
+All **103 tests pass with 100% green status**, covering:
+- Authentication & RBAC security (12 tests: login, register, 403 anti-escalation, forgot password, role update, delete user)
 - CP-SAT timetable generation (189 sessions, 0 hard violations)
 - Midsem exam solver (41 exams, halved capacity)
 - Rescheduling minimal moves benchmark ($\le 5$ moves)

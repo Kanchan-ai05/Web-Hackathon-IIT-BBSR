@@ -29,22 +29,80 @@ Comprehensive REST API reference for **CIT Nexus – Smart Campus Intelligence P
     "user": {
       "id": 1,
       "email": "admin@cit.edu",
-      "name": "Dean's Office (Admin)",
+      "name": "Prof. Shreya Kapoor (Dean's Office)",
       "role": "admin",
-      "department": "Administration"
+      "department": "ADMIN"
     }
   }
   ```
 
-### 1.2 Get Current User Profile
+### 1.2 User Registration
+- **Endpoint**: `POST /api/auth/register`
+- **Auth Scope**: Public
+- **Request Body**:
+  ```json
+  {
+    "name": "Priya Sen",
+    "email": "priya.sen@cit.edu",
+    "password": "SecurePassword123",
+    "role": "student",
+    "department": "ECE"
+  }
+  ```
+- **Safeguard**: Public registration strictly permits `student`, `faculty`, and `coordinator`. Attempts to assign `role="admin"` are rejected with `403 Forbidden`.
+- **Response (`201 Created`)**: Returns JWT access token, user role, and profile details for immediate authenticated session.
+
+### 1.3 Forgot Password
+- **Endpoint**: `POST /api/auth/forgot-password`
+- **Auth Scope**: Public
+- **Request Body**: `{"email": "user@cit.edu"}`
+- **Response (`200 OK`)**: Returns cryptographic reset token valid for 30 minutes.
+
+### 1.4 Reset Password
+- **Endpoint**: `POST /api/auth/reset-password`
+- **Auth Scope**: Public
+- **Request Body**:
+  ```json
+  {
+    "email": "user@cit.edu",
+    "token": "32_character_hex_token",
+    "new_password": "NewSecurePassword456"
+  }
+  ```
+- **Response (`200 OK`)**: Updates password hash via Bcrypt and invalidates used reset token.
+
+### 1.5 User Logout
+- **Endpoint**: `POST /api/auth/logout`
+- **Auth Scope**: Optional Bearer Token
+- **Response (`200 OK`)**: Records `USER_LOGOUT` audit log event.
+
+### 1.6 Get Current User Profile
 - **Endpoint**: `GET /api/auth/me`
 - **Auth Scope**: Bearer Token required
-- **Response (`200 OK`)**: User profile object with email, name, role, and department.
+- **Response (`200 OK`)**: Returns profile object (`id`, `email`, `name`, `role`, `department`, `is_active`).
 
-### 1.3 List Demo Accounts
+### 1.7 List Demo Accounts
 - **Endpoint**: `GET /api/auth/demo-accounts`
 - **Auth Scope**: Public
-- **Response (`200 OK`)**: Pre-seeded demo credentials for `admin`, `department_coordinator`, `faculty`, and `club`.
+- **Response (`200 OK`)**: Pre-seeded demo credentials for `admin`, `department_coordinator`, `faculty`, `student`, and `club`.
+
+### 1.8 Administrator User Directory
+- **Endpoint**: `GET /api/auth/users`
+- **Auth Scope**: Admin only (`require_role(["admin"])`)
+- **Response (`200 OK`)**: Array of all registered users with permissions and creation dates.
+
+### 1.9 Administrator Update User Role & Permissions
+- **Endpoint**: `PATCH /api/auth/users/{user_id}/role`
+- **Auth Scope**: Admin only (`require_role(["admin"])`)
+- **Request Body**: `{"role": "faculty", "department": "CSE", "is_active": true}`
+- **Safeguard**: Prevents demoting or deactivating the sole remaining active administrator.
+- **Response (`200 OK`)**: Updated user profile.
+
+### 1.10 Administrator Delete User Account
+- **Endpoint**: `DELETE /api/auth/users/{user_id}`
+- **Auth Scope**: Admin only (`require_role(["admin"])`)
+- **Safeguard**: Prevents self-deletion of the active admin account.
+- **Response (`200 OK`)**: Confirmation of account removal.
 
 ---
 
