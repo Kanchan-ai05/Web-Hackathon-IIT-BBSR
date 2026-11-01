@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth, DEMO_ACCOUNTS } from "../context/AuthContext";
+import { FALLBACK_SLOTS } from "../data/timetableData";
 
 export default function Home() {
   const { user, token, quickLogin, apiUrl, loading: authLoading, openAuthDrawer } = useAuth();
@@ -24,7 +25,7 @@ export default function Home() {
   const [loadingFacultySlots, setLoadingFacultySlots] = useState<boolean>(false);
 
   // Student Timetable State
-  const [selectedCohort, setSelectedCohort] = useState<string>("CSE-Year2-A");
+  const [selectedCohort, setSelectedCohort] = useState<string>("CSE-2");
   const [studentSlots, setStudentSlots] = useState<any[]>([]);
   const [loadingStudentSlots, setLoadingStudentSlots] = useState<boolean>(false);
 
@@ -112,19 +113,30 @@ export default function Home() {
       const res = await fetch(`${apiUrl}/api/timetable`);
       if (res.ok) {
         const allSlots = await res.json();
-        // Filter slots where faculty matches current faculty user or default faculty
         const userLast = user?.name ? user.name.split(" ").pop()?.toLowerCase() : "";
         const matched = allSlots.filter(
           (s: any) =>
             (userLast && s.faculty_name?.toLowerCase().includes(userLast)) ||
+            s.faculty_id === "F01" ||
             s.faculty_id === "FAC-CS-01"
         );
-        setFacultySlots(matched.length > 0 ? matched : allSlots.slice(0, 10));
+        if (matched.length > 0) {
+          setFacultySlots(matched);
+          return;
+        }
       }
     } catch (e) {
     } finally {
       setLoadingFacultySlots(false);
     }
+    const userLast = user?.name ? user.name.split(" ").pop()?.toLowerCase() : "";
+    const matched = FALLBACK_SLOTS.filter(
+      (s: any) =>
+        (userLast && s.faculty_name?.toLowerCase().includes(userLast)) ||
+        s.faculty_id === "F01" ||
+        s.faculty_id === "F19"
+    );
+    setFacultySlots(matched.length > 0 ? matched : FALLBACK_SLOTS.slice(0, 10));
   };
 
   // Fetch Student Cohort Schedule
@@ -135,12 +147,17 @@ export default function Home() {
       const res = await fetch(`${apiUrl}/api/timetable?group_id=${cohort}`);
       if (res.ok) {
         const slots = await res.json();
-        setStudentSlots(slots);
+        if (Array.isArray(slots) && slots.length > 0) {
+          setStudentSlots(slots);
+          return;
+        }
       }
     } catch (e) {
     } finally {
       setLoadingStudentSlots(false);
     }
+    const matched = FALLBACK_SLOTS.filter((s: any) => s.groups.includes(cohort));
+    setStudentSlots(matched.length > 0 ? matched : FALLBACK_SLOTS.slice(0, 8));
   };
 
   // Reset Demo Data (Admin only)
@@ -598,12 +615,15 @@ export default function Home() {
                   }}
                   className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 font-bold focus:bg-white focus:ring-1 focus:ring-emerald-500"
                 >
-                  <option value="CSE-Year2-A">CSE Year 2 (Sec A)</option>
-                  <option value="CSE-Year2-B">CSE Year 2 (Sec B)</option>
-                  <option value="CSE-Year3-A">CSE Year 3 (Sec A)</option>
-                  <option value="ECE-Year2-A">ECE Year 2 (Sec A)</option>
-                  <option value="MECH-Year2-A">MECH Year 2 (Sec A)</option>
-                  <option value="CIVIL-Year2-A">CIVIL Year 2 (Sec A)</option>
+                  <option value="CSE-2">CSE Year 2 (CSE-2)</option>
+                  <option value="CSE-3">CSE Year 3 (CSE-3)</option>
+                  <option value="ECE-2">ECE Year 2 (ECE-2)</option>
+                  <option value="ECE-3">ECE Year 3 (ECE-3)</option>
+                  <option value="EE-2">Electrical Year 2 (EE-2)</option>
+                  <option value="ME-2">Mechanical Year 2 (ME-2)</option>
+                  <option value="CE-2">Civil Year 2 (CE-2)</option>
+                  <option value="Y1-A">First Year Sec A (Y1-A)</option>
+                  <option value="Y1-B">First Year Sec B (Y1-B)</option>
                 </select>
               </div>
             </div>

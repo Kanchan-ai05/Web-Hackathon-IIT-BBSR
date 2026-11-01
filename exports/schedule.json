@@ -1498,10 +1498,369 @@
       ]
     }
   ],
+  "bookings": [
+    {
+      "booking_id": "BR-01",
+      "title": "Spectra '27 Inauguration",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "MON",
+      "periods": [
+        4,
+        5
+      ]
+    },
+    {
+      "booking_id": "BR-02",
+      "title": "Spectra Code Sprint (8-hour hackathon)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "CS-LAB-1",
+      "assigned_room": "CS-LAB-1",
+      "day": "THU",
+      "periods": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "booking_id": "BR-03",
+      "title": "Talk: Building India's Navigation Satellites",
+      "category": "guest_lecture",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "WED",
+      "periods": [
+        6,
+        7
+      ]
+    },
+    {
+      "booking_id": "BR-04",
+      "title": "Line-follower robot workshop",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "SH-1",
+      "assigned_room": "SH-1",
+      "day": "TUE",
+      "periods": [
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05a",
+      "title": "Spectra dance rehearsal (MON)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "MON",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05b",
+      "title": "Spectra dance rehearsal (TUE)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "TUE",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05c",
+      "title": "Spectra dance rehearsal (WED)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "WED",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05d",
+      "title": "Spectra dance rehearsal (THU)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "THU",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05e",
+      "title": "Spectra dance rehearsal (FRI)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "FRI",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-06",
+      "title": "Spectra Quiz Prelims",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "SH-1",
+      "assigned_room": "SH-1",
+      "day": "THU",
+      "periods": [
+        10,
+        11
+      ]
+    },
+    {
+      "booking_id": "BR-07",
+      "title": "Stage play: Andha Yug",
+      "category": "club_event",
+      "status": "alternative",
+      "reason": "Room SH-1 occupied by booking (BR-06) on THU period 10",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-08",
+      "title": "ECE alumni seminar",
+      "category": "department_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-1",
+      "assigned_room": "LH-1",
+      "day": "THU",
+      "periods": [
+        8
+      ]
+    },
+    {
+      "booking_id": "BR-09",
+      "title": "Valorant LAN finals screening",
+      "category": "club_event",
+      "status": "reject",
+      "reason": "Requested room and time slot unavailable due to schedule conflicts.",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-10",
+      "title": "Spectra photo exhibition",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "SH-1",
+      "assigned_room": "SH-1",
+      "day": "FRI",
+      "periods": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-11a",
+      "title": "Robo-Wars arena (day 1)",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "THU",
+      "periods": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-11b",
+      "title": "Robo-Wars arena (day 2)",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "FRI",
+      "periods": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-12",
+      "title": "Founder talk",
+      "category": "guest_lecture",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes. Note: Category adjusted to 'club_event' per role cap.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "TUE",
+      "periods": [
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-13",
+      "title": "Pre-placement talk",
+      "category": "department_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-1",
+      "assigned_room": "LH-1",
+      "day": "WED",
+      "periods": [
+        10,
+        11
+      ]
+    },
+    {
+      "booking_id": "BR-14",
+      "title": "Spectra Open Mic",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-2",
+      "assigned_room": "LH-2",
+      "day": "WED",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-15",
+      "title": "Spectra Jam Night",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes. Note: Category adjusted to 'club_event' per role cap.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "FRI",
+      "periods": [
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-16",
+      "title": "Spectra Pro-Night",
+      "category": "institute_event",
+      "status": "alternative",
+      "reason": "Room OAT occupied by booking (BR-05e) on FRI period 11",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-17",
+      "title": "Night sky watch",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "WED",
+      "periods": [
+        13,
+        14
+      ]
+    },
+    {
+      "booking_id": "BR-18",
+      "title": "Bridge-building contest",
+      "category": "department_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "CIVIL-LAB",
+      "assigned_room": "CIVIL-LAB",
+      "day": "THU",
+      "periods": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "booking_id": "BR-19",
+      "title": "Industry talk: chip design careers",
+      "category": "guest_lecture",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-1",
+      "assigned_room": "LH-1",
+      "day": "MON",
+      "periods": [
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-20",
+      "title": "Spectra closing ceremony",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "FRI",
+      "periods": [
+        4,
+        5
+      ]
+    }
+  ],
   "validation": {
     "valid": true,
     "hard_violations_count": 0,
     "soft_penalty": 1300,
+    "booking_score": 136,
     "soft_breakdown": {
       "faculty_avoid_preference": 0,
       "student_group_gap": 335,

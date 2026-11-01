@@ -1,5 +1,6 @@
 {
   "disruption_id": "SPECTRA-DISRUPTION-01",
+  "description": "Mid-semester disruption: Dr. Ananya Mishra on leave Thursday, CR-101 closed Tuesday morning, and added Remedial C Programming tutorial.",
   "moved_count": 5,
   "diff": [
     {
@@ -12,15 +13,15 @@
         "CE-3"
       ],
       "status": "moved",
-      "change_type": "room_only",
+      "change_type": "room_and_timing",
       "old": {
         "day": "TUE",
         "start_period": 5,
         "room_id": "CR-101"
       },
       "new": {
-        "day": "TUE",
-        "start_period": 5,
+        "day": "WED",
+        "start_period": 2,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -29,8 +30,8 @@
         "room_id": "CR-101"
       },
       "new_slot": {
-        "day": "TUE",
-        "start_period": 5,
+        "day": "WED",
+        "start_period": 2,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -46,15 +47,15 @@
         "CE-3"
       ],
       "status": "moved",
-      "change_type": "room_only",
+      "change_type": "room_and_timing",
       "old": {
         "day": "TUE",
         "start_period": 4,
         "room_id": "CR-101"
       },
       "new": {
-        "day": "TUE",
-        "start_period": 4,
+        "day": "WED",
+        "start_period": 1,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -63,8 +64,8 @@
         "room_id": "CR-101"
       },
       "new_slot": {
-        "day": "TUE",
-        "start_period": 4,
+        "day": "WED",
+        "start_period": 1,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -80,15 +81,15 @@
         "CE-3"
       ],
       "status": "moved",
-      "change_type": "room_only",
+      "change_type": "room_and_timing",
       "old": {
         "day": "TUE",
         "start_period": 2,
         "room_id": "CR-101"
       },
       "new": {
-        "day": "TUE",
-        "start_period": 2,
+        "day": "MON",
+        "start_period": 4,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -97,8 +98,8 @@
         "room_id": "CR-101"
       },
       "new_slot": {
-        "day": "TUE",
-        "start_period": 2,
+        "day": "MON",
+        "start_period": 4,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -122,7 +123,7 @@
       },
       "new": {
         "day": "MON",
-        "start_period": 9,
+        "start_period": 2,
         "room_id": "AUD"
       },
       "old_slot": {
@@ -132,7 +133,7 @@
       },
       "new_slot": {
         "day": "MON",
-        "start_period": 9,
+        "start_period": 2,
         "room_id": "AUD"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
@@ -151,15 +152,15 @@
       "change_type": "new_session",
       "old": null,
       "new": {
-        "day": "FRI",
-        "start_period": 9,
-        "room_id": "LH-3"
+        "day": "MON",
+        "start_period": 1,
+        "room_id": "LH-5"
       },
       "old_slot": null,
       "new_slot": {
-        "day": "FRI",
-        "start_period": 9,
-        "room_id": "LH-3"
+        "day": "MON",
+        "start_period": 1,
+        "room_id": "LH-5"
       },
       "why": "Newly added curriculum session scheduled",
       "reason": "Newly added curriculum session scheduled"
@@ -174,7 +175,7 @@
         "Y1-B"
       ],
       "status": "moved",
-      "change_type": "room_only",
+      "change_type": "room_and_timing",
       "old": {
         "day": "TUE",
         "start_period": 3,
@@ -182,8 +183,8 @@
       },
       "new": {
         "day": "TUE",
-        "start_period": 3,
-        "room_id": "CR-102"
+        "start_period": 1,
+        "room_id": "LH-1"
       },
       "old_slot": {
         "day": "TUE",
@@ -192,8 +193,8 @@
       },
       "new_slot": {
         "day": "TUE",
-        "start_period": 3,
-        "room_id": "CR-102"
+        "start_period": 1,
+        "room_id": "LH-1"
       },
       "why": "Room CR-101 closed for maintenance on TUE",
       "reason": "Room CR-101 closed for maintenance on TUE"
@@ -359,8 +360,8 @@
     {
       "session_id": "HS101-B-L1",
       "day": "TUE",
-      "start_period": 3,
-      "room_id": "CR-102"
+      "start_period": 1,
+      "room_id": "LH-1"
     },
     {
       "session_id": "HS101-B-L2",
@@ -1228,14 +1229,14 @@
     },
     {
       "session_id": "CE301-L2",
-      "day": "TUE",
-      "start_period": 5,
+      "day": "WED",
+      "start_period": 2,
       "room_id": "AUD"
     },
     {
       "session_id": "CE301-L3",
-      "day": "TUE",
-      "start_period": 4,
+      "day": "WED",
+      "start_period": 1,
       "room_id": "AUD"
     },
     {
@@ -1246,8 +1247,8 @@
     },
     {
       "session_id": "CE302-L2",
-      "day": "TUE",
-      "start_period": 2,
+      "day": "MON",
+      "start_period": 4,
       "room_id": "AUD"
     },
     {
@@ -1259,7 +1260,7 @@
     {
       "session_id": "CE303-L1",
       "day": "MON",
-      "start_period": 9,
+      "start_period": 2,
       "room_id": "AUD"
     },
     {
@@ -1336,10 +1337,740 @@
     },
     {
       "session_id": "CS101-REMEDIAL",
-      "day": "FRI",
-      "start_period": 9,
-      "room_id": "LH-3"
+      "day": "MON",
+      "start_period": 1,
+      "room_id": "LH-5"
     }
   ],
-  "soft_penalty": 1355
+  "exams": [
+    {
+      "exam_id": "EX-MA101",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "LH-1",
+        "LH-2",
+        "CR-103",
+        "CR-201",
+        "CR-202",
+        "SH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-PH101",
+      "day": "SAT",
+      "session": "PM",
+      "rooms": [
+        "AUD",
+        "LH-6",
+        "CR-103",
+        "CR-204"
+      ]
+    },
+    {
+      "exam_id": "EX-CS101",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AUD",
+        "CR-201",
+        "CR-202",
+        "CR-205"
+      ]
+    },
+    {
+      "exam_id": "EX-HS101",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "LH-1",
+        "LH-2",
+        "CR-105",
+        "CR-203",
+        "SH-1",
+        "SH-2"
+      ]
+    },
+    {
+      "exam_id": "EX-CS201",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "CR-101",
+        "CR-104"
+      ]
+    },
+    {
+      "exam_id": "EX-CS202",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AUD"
+      ]
+    },
+    {
+      "exam_id": "EX-CS203",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "LH-2",
+        "CR-204"
+      ]
+    },
+    {
+      "exam_id": "EX-CS204",
+      "day": "SAT",
+      "session": "PM",
+      "rooms": [
+        "LH-2"
+      ]
+    },
+    {
+      "exam_id": "EX-EC201",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "LH-4",
+        "LH-5"
+      ]
+    },
+    {
+      "exam_id": "EX-EC202",
+      "day": "SAT",
+      "session": "PM",
+      "rooms": [
+        "LH-3",
+        "CR-201"
+      ]
+    },
+    {
+      "exam_id": "EX-EC203",
+      "day": "FRI",
+      "session": "AM",
+      "rooms": [
+        "LH-2"
+      ]
+    },
+    {
+      "exam_id": "EX-EC204",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "LH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-EE201",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "AUD"
+      ]
+    },
+    {
+      "exam_id": "EX-EE202",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "CR-103",
+        "CR-104"
+      ]
+    },
+    {
+      "exam_id": "EX-EE203",
+      "day": "SAT",
+      "session": "AM",
+      "rooms": [
+        "LH-3"
+      ]
+    },
+    {
+      "exam_id": "EX-EE204",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "LH-3"
+      ]
+    },
+    {
+      "exam_id": "EX-ME201",
+      "day": "FRI",
+      "session": "PM",
+      "rooms": [
+        "LH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-ME202",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "CR-101",
+        "CR-205"
+      ]
+    },
+    {
+      "exam_id": "EX-ME203",
+      "day": "THU",
+      "session": "PM",
+      "rooms": [
+        "LH-4"
+      ]
+    },
+    {
+      "exam_id": "EX-ME204",
+      "day": "SAT",
+      "session": "PM",
+      "rooms": [
+        "LH-5"
+      ]
+    },
+    {
+      "exam_id": "EX-CE201",
+      "day": "SAT",
+      "session": "PM",
+      "rooms": [
+        "CR-105",
+        "CR-205"
+      ]
+    },
+    {
+      "exam_id": "EX-CE202",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "LH-4"
+      ]
+    },
+    {
+      "exam_id": "EX-CE203",
+      "day": "FRI",
+      "session": "PM",
+      "rooms": [
+        "AUD"
+      ]
+    },
+    {
+      "exam_id": "EX-CE204",
+      "day": "WED",
+      "session": "PM",
+      "rooms": [
+        "SH-2"
+      ]
+    },
+    {
+      "exam_id": "EX-HS201",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AUD",
+        "LH-6",
+        "CR-101"
+      ]
+    },
+    {
+      "exam_id": "EX-CS301",
+      "day": "FRI",
+      "session": "AM",
+      "rooms": [
+        "LH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-CS302",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "LH-5",
+        "CR-203"
+      ]
+    },
+    {
+      "exam_id": "EX-CS303",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "LH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-EC301",
+      "day": "FRI",
+      "session": "AM",
+      "rooms": [
+        "AUD"
+      ]
+    },
+    {
+      "exam_id": "EX-EC302",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "SH-1",
+        "SH-2"
+      ]
+    },
+    {
+      "exam_id": "EX-EC303",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "LH-3",
+        "LH-5"
+      ]
+    },
+    {
+      "exam_id": "EX-EE301",
+      "day": "THU",
+      "session": "PM",
+      "rooms": [
+        "AUD"
+      ]
+    },
+    {
+      "exam_id": "EX-EE302",
+      "day": "SAT",
+      "session": "AM",
+      "rooms": [
+        "CR-103",
+        "CR-204"
+      ]
+    },
+    {
+      "exam_id": "EX-EE303",
+      "day": "FRI",
+      "session": "AM",
+      "rooms": [
+        "SH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-ME301",
+      "day": "SAT",
+      "session": "PM",
+      "rooms": [
+        "CR-101",
+        "CR-202"
+      ]
+    },
+    {
+      "exam_id": "EX-ME302",
+      "day": "THU",
+      "session": "PM",
+      "rooms": [
+        "SH-1"
+      ]
+    },
+    {
+      "exam_id": "EX-ME303",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "CR-104",
+        "SH-2"
+      ]
+    },
+    {
+      "exam_id": "EX-CE301",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AUD"
+      ]
+    },
+    {
+      "exam_id": "EX-CE302",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "LH-6"
+      ]
+    },
+    {
+      "exam_id": "EX-CE303",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "LH-6"
+      ]
+    },
+    {
+      "exam_id": "EX-OE-BASKET",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AUD",
+        "SH-2"
+      ]
+    }
+  ],
+  "bookings": [
+    {
+      "booking_id": "BR-01",
+      "title": "Spectra '27 Inauguration",
+      "category": "institute_event",
+      "status": "alternative",
+      "reason": "Room AUD occupied by regular_session (CE302-L2) on MON period 4",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-02",
+      "title": "Spectra Code Sprint (8-hour hackathon)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "CS-LAB-1",
+      "assigned_room": "CS-LAB-1",
+      "day": "THU",
+      "periods": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "booking_id": "BR-03",
+      "title": "Talk: Building India's Navigation Satellites",
+      "category": "guest_lecture",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "WED",
+      "periods": [
+        6,
+        7
+      ]
+    },
+    {
+      "booking_id": "BR-04",
+      "title": "Line-follower robot workshop",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "SH-1",
+      "assigned_room": "SH-1",
+      "day": "TUE",
+      "periods": [
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05a",
+      "title": "Spectra dance rehearsal (MON)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "MON",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05b",
+      "title": "Spectra dance rehearsal (TUE)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "TUE",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05c",
+      "title": "Spectra dance rehearsal (WED)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "WED",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05d",
+      "title": "Spectra dance rehearsal (THU)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "THU",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-05e",
+      "title": "Spectra dance rehearsal (FRI)",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "FRI",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-06",
+      "title": "Spectra Quiz Prelims",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "SH-1",
+      "assigned_room": "SH-1",
+      "day": "THU",
+      "periods": [
+        10,
+        11
+      ]
+    },
+    {
+      "booking_id": "BR-07",
+      "title": "Stage play: Andha Yug",
+      "category": "club_event",
+      "status": "alternative",
+      "reason": "Room SH-1 occupied by booking (BR-06) on THU period 10",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-08",
+      "title": "ECE alumni seminar",
+      "category": "department_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-1",
+      "assigned_room": "LH-1",
+      "day": "THU",
+      "periods": [
+        8
+      ]
+    },
+    {
+      "booking_id": "BR-09",
+      "title": "Valorant LAN finals screening",
+      "category": "club_event",
+      "status": "reject",
+      "reason": "Requested room and time slot unavailable due to schedule conflicts.",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-10",
+      "title": "Spectra photo exhibition",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "SH-1",
+      "assigned_room": "SH-1",
+      "day": "FRI",
+      "periods": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-11a",
+      "title": "Robo-Wars arena (day 1)",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "THU",
+      "periods": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-11b",
+      "title": "Robo-Wars arena (day 2)",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "FRI",
+      "periods": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-12",
+      "title": "Founder talk",
+      "category": "guest_lecture",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes. Note: Category adjusted to 'club_event' per role cap.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "TUE",
+      "periods": [
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-13",
+      "title": "Pre-placement talk",
+      "category": "department_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-1",
+      "assigned_room": "LH-1",
+      "day": "WED",
+      "periods": [
+        10,
+        11
+      ]
+    },
+    {
+      "booking_id": "BR-14",
+      "title": "Spectra Open Mic",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-2",
+      "assigned_room": "LH-2",
+      "day": "WED",
+      "periods": [
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-15",
+      "title": "Spectra Jam Night",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes. Note: Category adjusted to 'club_event' per role cap.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "FRI",
+      "periods": [
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "booking_id": "BR-16",
+      "title": "Spectra Pro-Night",
+      "category": "institute_event",
+      "status": "alternative",
+      "reason": "Room OAT occupied by booking (BR-05e) on FRI period 11",
+      "room_id": null,
+      "assigned_room": null,
+      "day": null,
+      "periods": []
+    },
+    {
+      "booking_id": "BR-17",
+      "title": "Night sky watch",
+      "category": "club_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "OAT",
+      "assigned_room": "OAT",
+      "day": "WED",
+      "periods": [
+        13,
+        14
+      ]
+    },
+    {
+      "booking_id": "BR-18",
+      "title": "Bridge-building contest",
+      "category": "department_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "CIVIL-LAB",
+      "assigned_room": "CIVIL-LAB",
+      "day": "THU",
+      "periods": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "booking_id": "BR-19",
+      "title": "Industry talk: chip design careers",
+      "category": "guest_lecture",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "LH-1",
+      "assigned_room": "LH-1",
+      "day": "MON",
+      "periods": [
+        9
+      ]
+    },
+    {
+      "booking_id": "BR-20",
+      "title": "Spectra closing ceremony",
+      "category": "institute_event",
+      "status": "approved",
+      "reason": "Requested venue and window available with zero clashes.",
+      "room_id": "AUD",
+      "assigned_room": "AUD",
+      "day": "FRI",
+      "periods": [
+        4,
+        5
+      ]
+    }
+  ],
+  "validation": {
+    "valid": true,
+    "hard_violations_count": 0,
+    "soft_penalty": 1330,
+    "booking_score": 126,
+    "soft_breakdown": {
+      "faculty_avoid_preference": 0,
+      "student_group_gap": 325,
+      "student_group_daily_excess": 225,
+      "course_daily_repeat": 760,
+      "room_underutilization": 20,
+      "period_9_session": 0
+    }
+  }
 }
