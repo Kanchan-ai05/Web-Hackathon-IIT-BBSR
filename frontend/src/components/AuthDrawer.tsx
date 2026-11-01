@@ -7,14 +7,12 @@ export default function AuthDrawer() {
   const {
     isAuthDrawerOpen,
     authDrawerMode,
-    openAuthDrawer,
     closeAuthDrawer,
     login,
     register,
     forgotPassword,
     resetPassword,
     quickLogin,
-    user
   } = useAuth();
 
   const [mode, setMode] = useState<AuthDrawerMode>("login");
@@ -63,7 +61,7 @@ export default function AuthDrawer() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isAuthDrawerOpen]);
+  }, [isAuthDrawerOpen, closeAuthDrawer]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,12 +191,12 @@ export default function AuthDrawer() {
       />
 
       {/* Slide-in Panel */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
         <aside
           role="dialog"
           aria-modal="true"
           aria-label="CIT Nexus Authentication"
-          className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between border-l border-slate-200 transform transition-transform duration-300 ease-in-out"
+          className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between border-l border-slate-200 transform transition-transform duration-300 ease-in-out select-none"
         >
           {/* Header */}
           <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-indigo-950 to-sky-950 text-white relative">
@@ -211,7 +209,7 @@ export default function AuthDrawer() {
             </button>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-lg shadow-inner">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-lg shadow-inner">
                 🏛️
               </div>
               <div>
@@ -236,7 +234,7 @@ export default function AuthDrawer() {
                   }}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
                     mode === "login"
-                      ? "bg-sky-500 text-slate-950 shadow-md"
+                      ? "bg-sky-500 text-slate-950 shadow-md font-extrabold"
                       : "text-slate-300 hover:text-white"
                   }`}
                 >
@@ -251,7 +249,7 @@ export default function AuthDrawer() {
                   }}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
                     mode === "register"
-                      ? "bg-sky-500 text-slate-950 shadow-md"
+                      ? "bg-sky-500 text-slate-950 shadow-md font-extrabold"
                       : "text-slate-300 hover:text-white"
                   }`}
                 >
@@ -311,7 +309,7 @@ export default function AuthDrawer() {
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       placeholder="e.g. user@cit.edu"
-                      className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
+                      className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
                     />
                   </div>
                 </div>
@@ -344,7 +342,7 @@ export default function AuthDrawer() {
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full pl-9 pr-10 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
+                      className="w-full pl-9 pr-10 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
                     />
                     <button
                       type="button"
@@ -404,7 +402,7 @@ export default function AuthDrawer() {
                           setLoginPassword(acc.password);
                           quickLogin(acc.role);
                         }}
-                        className="p-2 rounded-lg border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 text-left transition-all group"
+                        className="p-2.5 rounded-xl border border-slate-200/90 hover:border-sky-400 hover:bg-sky-50/50 text-left transition-all group"
                       >
                         <div className="text-[11px] font-bold text-slate-800 group-hover:text-sky-700 capitalize">
                           {acc.role.replace("_", " ")}
@@ -432,7 +430,7 @@ export default function AuthDrawer() {
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
                     placeholder="e.g. Aarav Sharma"
-                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
                   />
                 </div>
 
@@ -446,7 +444,7 @@ export default function AuthDrawer() {
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     placeholder="e.g. aarav.sharma@cit.edu"
-                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
                   />
                 </div>
 
@@ -461,7 +459,7 @@ export default function AuthDrawer() {
                   <select
                     value={regRole}
                     onChange={(e) => setRegRole(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-medium"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-medium"
                   >
                     <option value="student">Student (Class Schedule, Navigation, QR Check-In)</option>
                     <option value="faculty">Faculty Member (Teaching Timetable, Room Booking)</option>
@@ -479,7 +477,7 @@ export default function AuthDrawer() {
                   <select
                     value={regDepartment}
                     onChange={(e) => setRegDepartment(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-medium"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-medium"
                   >
                     <option value="CSE">Computer Science & Engineering (CSE)</option>
                     <option value="ECE">Electronics & Communication (ECE)</option>
@@ -504,7 +502,7 @@ export default function AuthDrawer() {
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full px-3.5 pr-10 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
+                      className="w-full px-3.5 pr-10 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
                     />
                     <button
                       type="button"
@@ -526,7 +524,7 @@ export default function AuthDrawer() {
                     value={regConfirmPassword}
                     onChange={(e) => setRegConfirmPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
                   />
                   {regPassword && regConfirmPassword && regPassword !== regConfirmPassword && (
                     <p className="text-[10px] text-rose-500 mt-1">Passwords do not match</p>
@@ -569,7 +567,7 @@ export default function AuthDrawer() {
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         placeholder="e.g. faculty@cit.edu"
-                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900"
                       />
                     </div>
                     <button
@@ -592,7 +590,7 @@ export default function AuthDrawer() {
                         value={resetToken}
                         onChange={(e) => setResetToken(e.target.value)}
                         placeholder="32-character hex token"
-                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
                       />
                     </div>
                     <div>
@@ -605,7 +603,7 @@ export default function AuthDrawer() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-900 font-mono"
                       />
                     </div>
                     <button

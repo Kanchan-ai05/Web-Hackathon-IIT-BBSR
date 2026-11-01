@@ -116,15 +116,15 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo & Brand */}
             <div className="flex items-center gap-6">
-              <Link href="/" className="flex items-center gap-2.5">
-                <span className="text-2xl">🏛️</span>
+              <Link href="/" className="flex items-center gap-2.5 group">
+                <span className="text-2xl group-hover:scale-105 transition-transform">🏛️</span>
                 <div>
-                  <span className="font-bold text-slate-900 tracking-tight text-base sm:text-lg block leading-tight">
+                  <span className="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg block leading-tight group-hover:text-sky-700 transition-colors">
                     CIT Nexus
                   </span>
                   <span className="text-[11px] text-slate-500 font-medium block">
@@ -137,10 +137,10 @@ export default function Navbar() {
               <nav className="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-200">
                 <Link
                   href="/"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                     pathname === "/"
-                      ? "bg-sky-50 text-sky-700"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-sky-50 text-sky-700 shadow-2xs border border-sky-100"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                   }`}
                 >
                   <span>🏛️</span>
@@ -160,10 +160,10 @@ export default function Navbar() {
                     >
                       <button
                         onClick={() => setOpenDropdown(isOpen ? null : group.id)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                           isGroupActive
-                            ? "bg-sky-50 text-sky-700"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                            ? "bg-sky-50 text-sky-700 shadow-2xs border border-sky-100"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                         }`}
                       >
                         <span>{group.icon}</span>
@@ -172,7 +172,7 @@ export default function Navbar() {
                       </button>
 
                       {isOpen && (
-                        <div className="absolute top-full left-0 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95">
+                        <div className="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-200/90 p-2 z-50 animate-in fade-in zoom-in-95">
                           <div className="space-y-1">
                             {group.links.map((link) => {
                               const isActive = pathname === link.href;
@@ -181,9 +181,9 @@ export default function Navbar() {
                                   key={link.href}
                                   href={link.href}
                                   onClick={() => setOpenDropdown(null)}
-                                  className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${
+                                  className={`flex items-start gap-2.5 p-2 rounded-xl transition-all ${
                                     isActive
-                                      ? "bg-sky-50 text-sky-700 font-semibold"
+                                      ? "bg-sky-50 text-sky-700 font-bold"
                                       : "text-slate-700 hover:bg-slate-50"
                                   }`}
                                 >
@@ -212,12 +212,12 @@ export default function Navbar() {
               <button
                 onClick={handleOpenAiModal}
                 title={`API Server: ${apiUrl} (${apiStatus === "connected" ? `Online, ${apiLatency}ms latency` : apiStatus === "connecting" ? "Connecting/Waking up..." : "Offline/Unreachable"}). Click to configure.`}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all ${
                   apiStatus === "connected"
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100"
                     : apiStatus === "connecting"
-                    ? "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
-                    : "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100"
+                    ? "bg-amber-50 text-amber-800 border-amber-200/90 hover:bg-amber-100"
+                    : "bg-rose-50 text-rose-800 border-rose-200/90 hover:bg-rose-100"
                 }`}
               >
                 <span
@@ -229,7 +229,7 @@ export default function Navbar() {
                       : "bg-rose-500"
                   }`}
                 />
-                <span className="hidden sm:inline font-semibold">API:</span>
+                <span className="hidden sm:inline font-bold">API:</span>
                 <span className="font-mono text-[11px]">
                   {apiStatus === "connected"
                     ? apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1")
@@ -240,7 +240,7 @@ export default function Navbar() {
                     : "Offline"}
                 </span>
                 {apiLatency !== null && apiStatus === "connected" && (
-                  <span className="hidden lg:inline text-[10px] text-emerald-600 font-mono">
+                  <span className="hidden lg:inline text-[10px] text-emerald-600 font-mono font-semibold">
                     {apiLatency}ms
                   </span>
                 )}
@@ -250,14 +250,14 @@ export default function Navbar() {
               <button
                 onClick={handleOpenAiModal}
                 title="Configure Google Gemini or OpenAI API Key"
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all ${
                   isConnected
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100"
+                    : "bg-slate-50 text-slate-700 border-slate-200/90 hover:bg-slate-100"
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
-                <span className="hidden sm:inline font-semibold">AI:</span>
+                <span className="hidden sm:inline font-bold">AI:</span>
                 <span className="font-mono text-[11px]">
                   {isConnected ? modelName.split(" ")[0] : "Offline Rules"}
                 </span>
@@ -265,7 +265,7 @@ export default function Navbar() {
               </button>
 
               {/* Role Switcher */}
-              <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+              <div className="hidden sm:flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/90">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
                   Role:
                 </span>
@@ -276,7 +276,7 @@ export default function Navbar() {
                       key={acc.role}
                       disabled={loading}
                       onClick={() => quickLogin(acc.role)}
-                      className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${
                         isCurrent
                           ? "bg-white text-sky-700 shadow-xs border border-slate-200"
                           : "text-slate-600 hover:text-slate-900"
@@ -297,17 +297,17 @@ export default function Navbar() {
                     title="View user profile or switch accounts"
                     className="text-right hidden lg:block hover:opacity-80 transition-opacity"
                   >
-                    <div className="text-xs font-semibold text-slate-800 leading-tight">
+                    <div className="text-xs font-bold text-slate-800 leading-tight">
                       {user.name}
                     </div>
-                    <div className="text-[10px] font-mono text-sky-600 uppercase">
+                    <div className="text-[10px] font-mono text-sky-600 uppercase font-semibold">
                       {user.role.replace("_", " ")}
                     </div>
                   </button>
                   <button
                     onClick={logout}
                     title="Sign out of CIT Nexus"
-                    className="text-xs text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors font-semibold"
+                    className="text-xs text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-200 transition-colors font-bold"
                   >
                     Sign Out
                   </button>
@@ -316,14 +316,14 @@ export default function Navbar() {
                 <div className="flex items-center gap-1.5 pl-2">
                   <button
                     onClick={() => openAuthDrawer("login")}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs shadow-sm hover:shadow transition-all"
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs shadow-sm hover:shadow transition-all"
                   >
                     <span>🔐</span>
                     <span>Sign In</span>
                   </button>
                   <button
                     onClick={() => openAuthDrawer("register")}
-                    className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors"
+                    className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
                   >
                     Register
                   </button>
@@ -340,9 +340,9 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium whitespace-nowrap ${
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
                     isActive
-                      ? "bg-sky-50 text-sky-700 font-semibold"
+                      ? "bg-sky-50 text-sky-700"
                       : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -358,12 +358,14 @@ export default function Navbar() {
       {/* AI Configuration Modal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full p-6 border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150">
             <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🤖</span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-xl">
+                  🤖
+                </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">AI & LLM Configuration</h3>
+                  <h3 className="font-extrabold text-slate-900 text-base">AI & LLM Configuration</h3>
                   <p className="text-xs text-slate-500">Enable Google Gemini or OpenAI for natural-language parsing</p>
                 </div>
               </div>
@@ -377,25 +379,25 @@ export default function Navbar() {
 
             <div className="space-y-4 pt-4 text-sm">
               {/* Institutional Guardrail Banner */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-800">
                 <div className="font-bold flex items-center gap-1.5 mb-1">
-                  <span>🛡️</span> Hackathon Rule Enforcement
+                  <span>🛡️</span> Zero-Hallucination Hackathon Guardrail
                 </div>
                 <div>
-                  <strong>Only deterministic Python code</strong> decides timetable and booking validity. The LLM only parses conversational prompts and explains decisions. The app works 100% offline without any API key.
+                  <strong>Only deterministic Python code & CP-SAT solver</strong> decide timetable and booking validity. The LLM only parses conversational prompts and explains decisions. The app works 100% offline without any API key.
                 </div>
               </div>
 
               {/* Provider Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                   Select AI Provider
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setSelectedProvider("gemini")}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-semibold transition-all ${
+                    className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all ${
                       selectedProvider === "gemini"
                         ? "bg-sky-50 border-sky-400 text-sky-800 shadow-xs"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -406,7 +408,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setSelectedProvider("openai")}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-semibold transition-all ${
+                    className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all ${
                       selectedProvider === "openai"
                         ? "bg-emerald-50 border-emerald-400 text-emerald-800 shadow-xs"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -420,7 +422,7 @@ export default function Navbar() {
               {/* API Key Input */}
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     {selectedProvider === "gemini" ? "Google Gemini API Key" : "OpenAI API Key"}
                   </label>
                   {selectedProvider === "gemini" && (
@@ -428,7 +430,7 @@ export default function Navbar() {
                       href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-sky-600 hover:underline font-medium"
+                      className="text-xs text-sky-600 hover:underline font-semibold"
                     >
                       Get free key ↗
                     </a>
@@ -444,12 +446,12 @@ export default function Navbar() {
                         ? "AIzaSy..."
                         : "sk-proj-..."
                     }
-                    className="w-full px-3 py-2 pr-16 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                    className="w-full px-3.5 py-2.5 pr-16 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowKey(!showKey)}
-                    className="absolute right-2 top-2 text-xs text-slate-400 hover:text-slate-600 px-1"
+                    className="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-slate-600 font-semibold px-1"
                   >
                     {showKey ? "Hide" : "Show"}
                   </button>
@@ -465,7 +467,7 @@ export default function Navbar() {
                   type="button"
                   disabled={testLoading || !inputKey.trim()}
                   onClick={handleTestKey}
-                  className="w-full py-2 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-2"
                 >
                   {testLoading ? (
                     <>
@@ -480,7 +482,7 @@ export default function Navbar() {
 
                 {feedback.type && (
                   <div
-                    className={`mt-2 p-2.5 rounded-lg text-xs font-medium flex items-center gap-2 ${
+                    className={`mt-2 p-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
                       feedback.type === "success"
                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                         : "bg-rose-50 text-rose-800 border border-rose-200"
@@ -495,14 +497,14 @@ export default function Navbar() {
               {/* Backend API Endpoint Switcher */}
               <div className="pt-3 border-t border-slate-100">
                 <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Backend API Server Endpoint
                   </label>
                   <a
                     href={`${inputApiUrl}/docs`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-sky-600 hover:underline font-medium"
+                    className="text-xs text-sky-600 hover:underline font-semibold"
                   >
                     Interactive Docs (/docs) ↗
                   </a>
@@ -512,14 +514,14 @@ export default function Navbar() {
                     type="text"
                     value={inputApiUrl}
                     onChange={(e) => setInputApiUrl(e.target.value)}
-                    placeholder="https://cit-scheduling-api.onrender.com or http://localhost:8000"
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="http://localhost:8000"
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                   <button
                     type="button"
                     disabled={pingLoading || !inputApiUrl.trim()}
                     onClick={handlePingBackend}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <span className={pingLoading ? "animate-spin" : ""}>🔄</span>
                     <span>{pingLoading ? "Pinging..." : "Ping API"}</span>
@@ -528,7 +530,7 @@ export default function Navbar() {
 
                 {pingResult && (
                   <div
-                    className={`mb-2 p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
+                    className={`mb-2 p-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 ${
                       pingResult.includes("Connected")
                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                         : "bg-rose-50 text-rose-800 border border-rose-200"
@@ -540,16 +542,16 @@ export default function Navbar() {
                 )}
 
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400">Presets:</span>
+                  <span className="text-[10px] text-slate-400 font-semibold">Presets:</span>
                   <button
                     type="button"
                     onClick={() => {
                       setInputApiUrl("https://cit-scheduling-api.onrender.com");
                       setPingResult(null);
                     }}
-                    className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                    className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-lg border transition-colors ${
                       inputApiUrl.includes("render.com")
-                        ? "bg-sky-100 text-sky-800 border-sky-300 font-semibold"
+                        ? "bg-sky-100 text-sky-800 border-sky-300"
                         : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
@@ -561,9 +563,9 @@ export default function Navbar() {
                       setInputApiUrl("http://localhost:8000");
                       setPingResult(null);
                     }}
-                    className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                    className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-lg border transition-colors ${
                       inputApiUrl.includes("localhost") || inputApiUrl.includes("127.0.0.1")
-                        ? "bg-sky-100 text-sky-800 border-sky-300 font-semibold"
+                        ? "bg-sky-100 text-sky-800 border-sky-300"
                         : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
@@ -578,7 +580,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={handleClearAi}
-                className="text-xs text-slate-500 hover:text-rose-600 transition-colors"
+                className="text-xs text-slate-500 hover:text-rose-600 transition-colors font-semibold"
               >
                 Clear Key (Use Offline Rules)
               </button>
@@ -586,14 +588,14 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsAiModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveAi}
-                  className="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-xs font-semibold text-white shadow-xs transition-colors"
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-xs font-bold text-white shadow-xs transition-colors"
                 >
                   Save Settings
                 </button>
